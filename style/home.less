@@ -1,0 +1,74 @@
+
+@import "main.less";
+
+header {
+  text-align: center;
+  margin-top: 100px;
+}
+
+.tile-wrapper {
+  position: relative;
+  float: left;
+  width: 49%;
+
+  &::before {
+    display: block;
+    content: " ";
+    padding-top: 100%;
+  }
+}
+
+.tile {
+  @tile-spacing: 8px;
+  top: @tile-spacing;
+  bottom: @tile-spacing;
+  left: @tile-spacing;
+  right: @tile-spacing;
+  padding: 10px;
+  position: absolute;
+  background-color: lighten(@color-bg, 5%);
+  box-shadow: 5px 5px 10px 0 darken(@color-bg, 5%);
+  text-decoration: inherit;
+  color: inherit;
+
+  .thumbnail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+  }
+
+  .title {
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    padding: 15px;
+    left: 0px;
+    background-color: lighten(@color-bg, 5%);
+  }
+}
+
+@media (min-width: 768px) {
+  .tile-wrapper {
+    width: 33%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .tile-wrapper {
+    width: 25%
+  }
+}
+
+#projects {
+  &::after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
+  }
+}
