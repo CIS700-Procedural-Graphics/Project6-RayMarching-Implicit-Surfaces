@@ -1,0 +1,3 @@
+Make a linked list structure to store the grammar characters; makes inserting new chars much easier
+Make map of char -> Rule[], where a single rule is a probability and a successor string. When a char is parsed for replacement, look at the Rule array to determine what should go in its stead
+Make a map of char -> instruction (JS function pointers aren't too hard?)
