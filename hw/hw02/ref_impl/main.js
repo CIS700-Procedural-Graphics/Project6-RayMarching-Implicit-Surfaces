@@ -15,6 +15,7 @@ function Rule(prob, str)
 function Node(symbol) // Node for a linked list of grammar symbols
 {
 	this.next = null;
+	this.prev = null;
 	this.character = symbol;
 }
 
@@ -24,17 +25,30 @@ function LinkedList()
 	this.tail = null;
 }
 
+function symmetricallyLink(node1, node2)
+{
+	node1.next = node2;
+	node2.prev = node1;
+}
+
 var GUI = function()
 {
 	//TODO: Add GUI variables as needed
 	//e.g. this.noiseStrength = 10.0;
 }
 
-//            Node   Map of rules
-function Apply(prevNode, grammar)
+// Takes in the node we want to replace
+// and randomly chooses and applies a rule to it
+// Returns the node from which our expander should continue expanding
+//            						Node   Map of rules
+function ApplyRandomRule(linkedList, node, grammar)
 {
-	var symbol = prevNode.next.character;
+	var symbol = node.character;
 	var rulesArray = grammar[symbol];
+	if(rulesArray == null)
+	{
+		return;
+	}
 
 	var unifRand = Math.random();
 	var tmp = 0;
@@ -49,10 +63,10 @@ function Apply(prevNode, grammar)
 			break;
 		}
 	}
-	ReplaceNode(prevNode, rule.successorString);
+	ReplaceNode(linkedList, node, rule.successorString);
 }
 
-function MakeSymbolLinkedList(input_string) {
+function StringToLinkedList(input_string) {
 	var result = new LinkedList();
 
 	var root_node = new Node(input_string[0]);
@@ -62,7 +76,7 @@ function MakeSymbolLinkedList(input_string) {
 
 	for (var i = 1; i < input_string.length; ++i) {
 		var new_node = new Node(input_string[i]);
-		current_node.next = new_node;
+		symmetricallyLink(current_node, new_node);
 		current_node = new_node;
 	}
 	result.head = root_node;
@@ -81,13 +95,43 @@ function LinkedListToString(linkedList)
 	return result;
 }
 
-//Given the node just before the node to be replaced, insert a sub-linked-list that represents replacementString
-function ReplaceNode(prevNode, replacementString)
+//Given the node to be replaced, insert a sub-linked-list that represents replacementString
+function ReplaceNode(linkedList, node, replacementString)
 {
-	var lList = MakeSymbolLinkedList(replacementString);
-	var finalNext = prevNode.next.next; // The head of the linked list we're going to append after lList
-	prevNode.next = lList.head;
-	lList.tail.next = finalNext;
+	var lList = StringToLinkedList(replacementString);
+	var finalNext = node.next; // The head of the linked list we're going to append after lList
+
+	if(node.prev == null)
+	{
+		linkedList.head = lList.head;
+	}
+	else
+	{
+		symmetricallyLink(node.prev, lList.head);
+	}
+
+	if(finalNext == null)
+	{
+		linkedList.tail = lList.tail;
+	}
+	else
+	{
+		symmetricallyLink(lList.tail, finalNext);
+	}
+}
+
+//									String,     Dict<char, Rule[]>
+function IterativeLSystemGeneration(seedString, grammar, numIterations)
+{
+	var currStringLL = StringToLinkedList(seedString);
+	for(var i = 0; i < numIterations; i++)
+	{
+		for(var currNode = currStringLL.head; currNode != null; currNode = currNode.next)
+		{
+			ApplyRandomRule(currStringLL, currNode, grammar);
+		}
+	}
+	return currStringLL;
 }
 
 var scene, camera, renderer;
@@ -105,7 +149,7 @@ window.onload = function()
 function init()
 {
 	var str = "ABABCDE";
-	var head = MakeSymbolLinkedList(str);
+	var head = StringToLinkedList(str);
 	var midNode = head.head;
 	for(var i = 0; i < 3; i++)
 	{
