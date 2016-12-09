@@ -1,0 +1,11 @@
+{
+  "name": "procedural-graphics-course",
+  "private": true,
+  "scripts": {
+    "publish": "node tools/publish"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "ghpages": "0.0.8"
+  }
+}
