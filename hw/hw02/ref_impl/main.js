@@ -45,6 +45,7 @@ function ApplyRandomRule(linkedList, node, grammar)
 {
 	var symbol = node.character;
 	var rulesArray = grammar[symbol];
+
 	if(rulesArray == null)
 	{
 		return;
@@ -54,7 +55,7 @@ function ApplyRandomRule(linkedList, node, grammar)
 	var tmp = 0;
 	var rule = null;
 
-	for(var i = 0; i < length(rulesArray); i++)
+	for(var i = 0; i < rulesArray.length; i++)
 	{
 		tmp += rulesArray[i].probability;
 		if(unifRand < tmp)
@@ -63,6 +64,7 @@ function ApplyRandomRule(linkedList, node, grammar)
 			break;
 		}
 	}
+    console.log(rule.successorString);
 	ReplaceNode(linkedList, node, rule.successorString);
 }
 
@@ -120,7 +122,7 @@ function ReplaceNode(linkedList, node, replacementString)
 	}
 }
 
-//									String,     Dict<char, Rule[]>
+//					String,     Dict<char, Rule[]>
 function IterativeLSystemGeneration(seedString, grammar, numIterations)
 {
 	var currStringLL = StringToLinkedList(seedString);
@@ -148,25 +150,22 @@ window.onload = function()
 
 function init()
 {
-	var str = "ABABCDE";
-	var head = StringToLinkedList(str);
-	var midNode = head.head;
-	for(var i = 0; i < 3; i++)
-	{
-		midNode = midNode.next;
-	}
-	ReplaceNode(midNode, "BUTTS");
-	var str2 = LinkedListToString(head);
+    dict['B'] = [
+	new Rule(0.5, "ZZZ"), 
+	new Rule(0.5, "YYY")
+    ]; 
+    var str = "ABABABABABA";
+    var str2 = LinkedListToString(IterativeLSystemGeneration(str, dict, 1));
 
-	console.log(str);
-	console.log(str2);
+    console.log(str);
+    console.log(str2);
 
 
 	startTime = Date.now();
 
 	scene = new THREE.Scene();
 
-									//FOV, aspect, nearclip, farclip
+							//FOV, aspect, nearclip, farclip
 	camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight,
 										 1, 10000);
 	camera.position.z = 5;
