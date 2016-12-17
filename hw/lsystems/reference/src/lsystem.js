@@ -1,4 +1,3 @@
-
 function Rule(prob, str)
 {
 	this.probability = prob; // The probability that this Rule will be used when replacing a character in the grammar string
@@ -51,11 +50,11 @@ function ApplyRandomRule(linkedList, node, grammar)
 			break;
 		}
 	}
-    console.log(rule.successorString);
+    //console.log(rule.successorString);
 	ReplaceNode(linkedList, node, rule.successorString);
 }
 
-function StringToLinkedList(input_string) {
+export function StringToLinkedList(input_string) {
 	var result = new LinkedList();
 
 	var root_node = new Node(input_string[0]);
@@ -73,7 +72,7 @@ function StringToLinkedList(input_string) {
 	return result;
 }
 
-function LinkedListToString(linkedList)
+export function LinkedListToString(linkedList)
 {
 	var result = "";
 	var currentNode;
@@ -109,25 +108,64 @@ function ReplaceNode(linkedList, node, replacementString)
 	}
 }
 
-//					String,     Dict<char, Rule[]>
-function IterativeLSystemGeneration(seedString, grammar, numIterations)
+
+export default function Lsystem(axiom, grammar, iterations)
 {
-	var currStringLL = StringToLinkedList(seedString);
-	for(var i = 0; i < numIterations; i++)
+	// Setup axiom
+	if (typeof axiom === "undefined")
 	{
-		for(var currNode = currStringLL.head; currNode != null; currNode = currNode.next)
+		this.axiom = "FX";
+	} else {
+		this.axiom = Object.assign({}, axiom);
+	}
+
+	// Setup grammar
+	if (typeof grammar === "undefined")
+	{
+		this.grammar = {};
+    	this.grammar['X'] = [
+		 new Rule(1, "[+FX][-FX]") 
+		 ]; 
+	} else {
+		this.grammar = grammar;
+		this.grammar = Object.assign({}, grammar);
+	}
+	
+	// Setup iterations
+	if (typeof iterations === "undefined")
+	{
+		this.iterations = 0;
+	} else {
+		this.iterations = iterations;
+	}
+
+	// Update parameters
+	this.Update = function(axiom, grammar) 
+	{
+		// Setup axiom
+		if (typeof axiom !== "undefined")
 		{
-			ApplyRandomRule(currStringLL, currNode, grammar);
+			this.axiom = Object.assign({}, axiom);
+		}
+
+		// Setup grammar
+		if (typeof grammar !== "undefined")
+		{
+			this.grammar = Object.assign({}, grammar);
 		}
 	}
-	return currStringLL;
-}
 
-export default {
-    IterativeLSystemGeneration: IterativeLSystemGeneration,
-    Rule: Rule,
-    LinkedListToString: LinkedListToString,
-	StringToLinkedList: StringToLinkedList,
-    Node: Node
-
+	// Return results of lsystem after num iterations
+	this.DoIterations = function(num)
+	{
+		var currStringLL = StringToLinkedList(this.axiom);
+		for(var i = 0; i < num; i++)
+		{
+			for(var currNode = currStringLL.head; currNode != null; currNode = currNode.next)
+			{
+				ApplyRandomRule(currStringLL, currNode, this.grammar);
+			}
+		}
+		return currStringLL;
+	}
 }
