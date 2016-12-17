@@ -25,6 +25,8 @@ __Add a page to the navbar__
 
 __Developing__
 
+First run `npm install`
+
 As with the assignments for this class, running `npm start` in the root of the `website` directory will start a server to build the website on the fly and serve it up at `localhost:8080`. Unfortunately this one does not auto-refresh on update.
 
  __Deploying Updates__
