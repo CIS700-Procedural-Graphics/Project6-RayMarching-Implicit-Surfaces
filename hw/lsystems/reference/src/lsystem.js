@@ -1,4 +1,4 @@
-function Rule(prob, str)
+export function Rule(prob, str)
 {
 	this.probability = prob; // The probability that this Rule will be used when replacing a character in the grammar string
 	this.successorString = str; // The string that will replace the char that maps to this Rule
@@ -112,11 +112,11 @@ function ReplaceNode(linkedList, node, replacementString)
 export default function Lsystem(axiom, grammar, iterations)
 {
 	// Setup axiom
-	if (typeof axiom === "undefined")
+	if (!axiom)
 	{
 		this.axiom = "FX";
 	} else {
-		this.axiom = Object.assign({}, axiom);
+		this.axiom = axiom;
 	}
 
 	// Setup grammar
@@ -134,7 +134,7 @@ export default function Lsystem(axiom, grammar, iterations)
 	// Setup iterations
 	if (typeof iterations === "undefined")
 	{
-		this.iterations = 0;
+		this.iterations = 3;
 	} else {
 		this.iterations = iterations;
 	}

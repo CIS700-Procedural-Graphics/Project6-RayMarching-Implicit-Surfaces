@@ -1,7 +1,7 @@
 
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
-import Lsystem, {LinkedListToString} from './lsystem.js'
+import Lsystem, {LinkedListToString, Rule} from './lsystem.js'
 import Turtle from './turtle.js'
 
 console.log(Lsystem)
@@ -28,25 +28,34 @@ function onLoad(framework) {
   directionalLight.position.multiplyScalar(10);
 
   // set camera position
-  camera.position.set(1, 1, 2);
+  camera.position.set(1, 1, 10);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   //scene.add(lambertCube);
   scene.add(directionalLight);
+    
+    var grammar = {};
+    grammar['X'] = [
+         new Rule(0.4, "[+FX][-FX]"),
+         new Rule(0.3, "[+F][-FX]"),  
+         new Rule(0.3, "[+FX][-F]")  
+	]; 
 
-  var lsys = new Lsystem();
+
+  var lsys = new Lsystem(null, grammar);
   var turtle = new Turtle(scene);
+  doLsystem(lsys, lsys.iterations, turtle);
 
   // edit params and listen to changes like this
   // more information here: https://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
-   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
+   gui.add(camera, 'fov', 0, 180).onFinishChange(function(newVal) {
     camera.updateProjectionMatrix();
   });
-  gui.add(lsys, 'axiom').onChange(function(newVal) {
+  gui.add(lsys, 'axiom').onFinishChange(function(newVal) {
     lsys.Update(newVal, null);
     doLsystem(lsys, lsys.iterations, turtle);
   });
-   gui.add(lsys, 'iterations', 0, 12).step(1).onChange(function(newVal) {
+   gui.add(lsys, 'iterations', 0, 12).step(1).onFinishChange(function(newVal) {
     doLsystem(lsys, newVal, turtle);
   });
 }
@@ -55,7 +64,6 @@ function doLsystem(lsystem, iterations, turtle) {
     //console.log("Doing lsystem");
 
     //Clear scene
-
     var obj;
     for( var i = turtle.scene.children.length - 1; i > 3; i--) {
         obj = turtle.scene.children[i];
@@ -65,11 +73,11 @@ function doLsystem(lsystem, iterations, turtle) {
     // lsystem testing
     var result = lsystem.DoIterations(iterations);
     turtle.clear();
-    var turtle2 = new Turtle(turtle.scene);
-    turtle2.renderSymbols(result);
+    //var turtle2 = new Turtle(turtle.scene);
+    turtle.renderSymbols(result);
 
     var str2 = LinkedListToString(result);
-    //console.log(str2);
+    console.log(str2);
 }
 
 // called on frame updates
