@@ -38,6 +38,9 @@ function init(callback, update) {
     controls.rotateSpeed = 0.3;
     controls.zoomSpeed = 1.0;
     controls.panSpeed = 2.0;
+    controls.addEventListener('change', function() {
+      camera.hasMoved = true;
+    });
 
     document.body.appendChild(renderer.domElement);
 
