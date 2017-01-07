@@ -20,92 +20,51 @@ function onLoad(framework) {
   setupCamera(camera);
   setupLights(scene);
 
-  // - Generate debug grid
-  // - Generate a set of centers, radius
-  // - Move the centers
-  // - Color cell that are within the radius
-  //   + For every cell
-  //     + For every metaball
-  // - Color the corner that are within radius
-  // - Create triangles from these corners
+  // ===== Construct grid ====== //
 
-  // -- Variables
   var gridRes = 10;
   var gridWidth = 20;
-  var gridCellWidth = gridWidth / gridRes;
-  var numMetaballs = 10;
-  var matLambertWhite = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
-  var x, y, z, vx, vy, vz, radius, pos, vel;
-  var maxRadius = 3;
-  var maxRadiusDoubled = maxRadius * 2;
-  var maxSpeed = 0.008;
-  framework.balls = [];
+  var config = {
+    gridRes: 10,
+    gridWidth: 20,
+    gridCellWidth: gridWidth / gridRes,
+    numMetaballs: 10,
+    maxRadius: 3,
+    maxSpeed: 0.10
+  };
 
-  // ===== Construct grid ====== //
-  framework.grid = new Grid(new THREE.Vector3(), gridRes, gridCellWidth, framework);
-  for (var i = 0; i < framework.grid.res3; i++) {
-    scene.add(framework.grid.cells[i].wireframe);
-    scene.add(framework.grid.cells[i].mesh);
-    scene.add(framework.grid.cells[i].centerMesh);
-  }
-
-  // ===== Setup metaballs ====== //
-  for (var i = 0; i < numMetaballs; i++) {
-    x = Math.random() * (gridWidth - maxRadius * 2) + maxRadius;
-    y = Math.random() * (gridWidth - maxRadius * 2) + maxRadius;
-    z = Math.random() * (gridWidth - maxRadius * 2) + maxRadius;
-    pos = new THREE.Vector3(x, y, z);
-    vx = (Math.random() * 2 - 1) * maxSpeed;
-    vy = (Math.random() * 2 - 1) * maxSpeed;
-    vz = (Math.random() * 2 - 1) * maxSpeed;
-    vel = new THREE.Vector3(vx, vy, vz);
-    radius = Math.random() * maxRadius + 0.5;
-    framework.balls.push(new Metaball(pos, radius, vel, gridWidth));
-  }
-
-  for (var i = 0; i < framework.balls.length; i++) {
-    scene.add(framework.balls[i].mesh);
-  }
-
-  // ===== Text ===== //
-
-  // ===== GUI ===== //
+  framework.grid = new Grid(config, framework);
 
   // edit params and listen to changes like this
   // more information here: https://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
-  gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
-    camera.updateProjectionMatrix();
-  });
-
-  var Config = function() {
+  // --- CONFIG ---
+  var GUIControls = function() {
     this.restart = function() {
       window.location.reload();
     }
+    this.speed = config.maxSpeed / 2.0;
   }
-  var config = new Config();
-  gui.add(config, 'restart');
+  var guiControls = new GUIControls();
+  gui.add(guiControls, 'restart');
+  gui.add(guiControls, 'speed', 0, config.maxSpeed).onChange(function(value) {
 
+  });
+
+  // --- DEBUG ---
   var DebugOptions = function() {
     this.showGrid = false;
-    this.showCornerValues = false;
     this.showSpheres = false;
   };
   var debug = new DebugOptions();
   var debugFolder = gui.addFolder('Debug');
-  var showGrid = debugFolder.add(debug, 'showGrid');
-  var showCornerValues = debugFolder.add(debug, 'showCornerValues');
-  var showSpheres = debugFolder.add(debug, 'showSpheres');
-  debugFolder.open();
-
-  showGrid.onChange(function(value) {
+  debugFolder.add(debug, 'showGrid').onChange(function(value) {
     if (value) {
       framework.grid.show();
     } else {
       framework.grid.hide();
     }
   });
-
-  showSpheres.onChange(function(value) {
+  debugFolder.add(debug, 'showSpheres').onChange(function(value) {
     if (value) {
       for (var i = 0; i < numMetaballs; i++) {
         framework.balls[i].show();
@@ -116,21 +75,14 @@ function onLoad(framework) {
       }
     }
   });
+  debugFolder.open();
 }
 
 // called on frame updates
 function onUpdate(framework) {
 
-  // Move metaballs
-  if (framework.balls !== undefined) {
-    for (var i = 0; i < framework.balls.length; i++) {
-      framework.balls[i].update(framework);
-    }
-
-    // Color grid based on spheres
-    if (framework.grid !== undefined) {
-      framework.grid.update(framework);
-    }
+  if (framework.grid !== undefined) {
+    framework.grid.update(framework);
   }
 
   if (framework.camera !== undefined && framework.camera.hasMoved !== undefined) {
@@ -163,7 +115,12 @@ function setupLights(scene) {
 }
 
 // LOOK
-var Grid = function(origin, res, cellWidth, framework) {
+var Grid = function(config, framework) {
+
+  var SamplingPointEnum = {
+    CENTER: 0,
+    CORNERS: 1
+  };
 
   // LOOK
   var Cell = function(x, y, z) {
@@ -204,10 +161,10 @@ var Grid = function(origin, res, cellWidth, framework) {
     // Wireframe line segments
     this.wireframe = new THREE.LineSegments( geo, mat );
     this.wireframe.position.set(x, y, z);
-    this.wireframe.scale.set(cellWidth, cellWidth, cellWidth);
+    this.wireframe.scale.set(config.gridCellWidth, config.gridCellWidth, config.gridCellWidth);
 
     // Green cube
-    geo = new THREE.BoxBufferGeometry(cellWidth, cellWidth, cellWidth);
+    geo = new THREE.BoxBufferGeometry(config.gridCellWidth, config.gridCellWidth, config.gridCellWidth);
     mat = new THREE.MeshBasicMaterial( { color: 0x00ee00, transparent: true, opacity: 0.5 });
     this.mesh = new THREE.Mesh( geo, mat );
     this.mesh.position.set(x, y, z);
@@ -227,8 +184,8 @@ var Grid = function(origin, res, cellWidth, framework) {
     // Center dot
     geo = new THREE.Geometry();
     geo.vertices.push(new THREE.Vector3( x, y, z));
-    mat = new THREE.PointCloudMaterial( { color: 0, size: 3, sizeAttenuation: false } );
-    this.centerMesh = new THREE.PointCloud( geo, mat );
+    mat = new THREE.PointsMaterial( { color: 0, size: 3, sizeAttenuation: false } );
+    this.centerMesh = new THREE.Points( geo, mat );
     this.centerMesh.visible = false;
 
     this.updateLabel = function(screenPos, text, opacity) {
@@ -244,18 +201,22 @@ var Grid = function(origin, res, cellWidth, framework) {
     }
   }
 
-  this.origin = origin;
-  this.cellWidth = cellWidth;
-  this.halfCellWidth = cellWidth / 2.0;
-  this.res = res;
-  this.res2 = res * res;
-  this.res3 = res * res * res;
+  this.maxRadius = config.maxRadius;
+  this.origin = new THREE.Vector3(0);
+  this.cellWidth = config.gridCellWidth;
+  this.halfCellWidth = config.gridCellWidth / 2.0;
+  this.gridWidth = config.gridWidth;
+  this.res = config.gridRes;
+  this.res2 = config.gridRes * config.gridRes;
+  this.res3 = config.gridRes * config.gridRes * config.gridRes;
+  this.maxSpeed = config.maxSpeed;
+  this.numMetaballs = config.numMetaballs;
   this.cells = [];
   this.labels = [];
   this.camera = framework.camera;
-  this.screenWidth = window.innerWidth;
-  this.screenHeight = window.innerHeight;
   this.visible = true;
+  this.samplingPoint = SamplingPointEnum.CENTER;
+  this.balls = [];
 
   this.init = function() {
 
@@ -263,10 +224,37 @@ var Grid = function(origin, res, cellWidth, framework) {
       var i3 = this.i1toi3(i);
       var pos = this.i3toPos(i3);
       var {x, y, z} = pos;
+      var cell = new Cell(x, y, z);
 
-      this.cells.push(new Cell(x, y, z));
+      framework.scene.add(cell.wireframe);
+      framework.scene.add(cell.mesh);
+      framework.scene.add(cell.centerMesh);
+      this.cells.push(cell);
     }
+
+    // ===== Setup metaballs ====== //
+    var x, y, z, vx, vy, vz, radius, pos, vel;
+    var matLambertWhite = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+    var maxRadiusDoubled = this.maxRadius * 2;
+
+    for (var i = 0; i < this.numMetaballs; i++) {
+      x = Math.random() * (this.gridWidth - maxRadiusDoubled) + this.maxRadius;
+      y = Math.random() * (this.gridWidth - maxRadiusDoubled) + this.maxRadius;
+      z = Math.random() * (this.gridWidth - maxRadiusDoubled) + this.maxRadius;
+      pos = new THREE.Vector3(x, y, z);
+      vx = (Math.random() * 2 - 1) * this.maxSpeed;
+      vy = (Math.random() * 2 - 1) * this.maxSpeed;
+      vz = (Math.random() * 2 - 1) * this.maxSpeed;
+      vel = new THREE.Vector3(vx, vy, vz);
+      radius = Math.random() * this.maxRadius + 0.5;
+      var ball = new Metaball(pos, radius, vel, this.gridWidth);
+      framework.scene.add(ball.mesh);
+      this.balls.push(ball);
+    }
+
     this.hide();
+
+    console.log("Grid init");
   };
 
   this.update = function(framework) {
@@ -281,32 +269,43 @@ var Grid = function(origin, res, cellWidth, framework) {
       this.cells[c].centerMesh.visible = false;
     }
 
-    // Color cells that have a sample > 1 at the center
-    for (var c = 0; c < this.res3; c++) {
-      f = 0;
-      for (var b = 0; b < framework.balls.length; b++) {
-        // Accumulate f for each metaball relative to this cell
-        f += framework.balls[b].radius2 / this.cells[c].pos.distanceToSquared(framework.balls[b].pos);
-        if (f > 1) {
-          this.cells[c].mesh.visible = true;
-          this.cells[c].centerMesh.visible = true;
+    if (this.samplingPoint === SamplingPointEnum.CENTER) {
+      // -- SAMPLE AT CENTER
+      // Color cells that have a sample > 1 at the center
+      for (var c = 0; c < this.res3; c++) {
+        f = 0;
+        for (var b = 0; b < this.balls.length; b++) {
+          // Accumulate f for each metaball relative to this cell
+          f += this.balls[b].radius2 / this.cells[c].pos.distanceToSquared(this.balls[b].pos);
+          if (f > 1) {
+            this.cells[c].mesh.visible = true;
+            this.cells[c].centerMesh.visible = true;
+          }
         }
-      }
 
-      if (this.visible === false) {
-        this.cells[c].clearLabel();
-        continue;
-      }
-      var i3 = this.i1toi3(c);
-      var pos = this.i3toPos(i3);
-      var {x, y, z} = pos;
+        if (this.visible === false) {
+          this.cells[c].clearLabel();
+          continue;
+        }
+        var i3 = this.i1toi3(c);
+        var pos = this.i3toPos(i3);
+        var {x, y, z} = pos;
 
-      // Update grid value
-      var screenPos = pos.project(this.camera);
-      screenPos.x = ( screenPos.x + 1 ) / 2 * this.screenWidth;
-      screenPos.y = - ( screenPos.y - 1 ) / 2 *  this.screenHeight;
-      this.cells[c].updateLabel(screenPos, f.toFixed(2), f - 0.5);
+        // Update grid value
+        var screenPos = pos.project(this.camera);
+        screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
+        screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
+        this.cells[c].updateLabel(screenPos, f.toFixed(2), f - 0.5);
+      }
+    } else if (this.samplingPoint === SamplingPoint.CORNERS) {
+
     }
+
+    // Move metaballs
+    for (var i = 0; i < this.balls.length; i++) {
+      this.balls[i].update();
+    }
+
   }
 
   this.show = function() {
@@ -379,7 +378,7 @@ var Metaball = function(pos, radius, vel, gridWidth) {
     this.mesh.visible = false;
   };
 
-  this.update = function(framework) {
+  this.update = function() {
 
     var temp = this.pos.add(this.vel);
     if ((temp.x - this.radius) < 0 || (temp.x + this.radius) > this.gridWidth) {
