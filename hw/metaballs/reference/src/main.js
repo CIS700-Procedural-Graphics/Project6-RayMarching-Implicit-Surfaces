@@ -168,7 +168,6 @@ var Grid = function(config, framework) {
         this.label.style.left = screenPos.x + 'px';
         this.label.innerHTML = text;
         this.label.style.opacity = opacity;
-
       }
 
       this.clearLabel = function() {
@@ -182,6 +181,7 @@ var Grid = function(config, framework) {
 
       this.hide = function() {
         this.mesh.visible = false;
+        this.clearLabel();
       }
 
       this.init();
@@ -361,7 +361,7 @@ var Grid = function(config, framework) {
         }
 
         // Update label
-        var screenPos = this.cells[c].center.pos.project(this.camera);
+        var screenPos = this.cells[c].center.pos.clone().project(this.camera);
         screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
         screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
         this.cells[c].center.updateLabel(screenPos, f.toFixed(2), f - 0.5);
@@ -372,25 +372,25 @@ var Grid = function(config, framework) {
       // Color cells that have a sample > 1 at the corners
       for (var c = 0; c < this.res3; c++) {
         for (var cp = 0; cp < 8; cp++) {
-            f = 0;
-            for (var b = 0; b < this.balls.length; b++) {
-              // Accumulate f for each metaball relative to this cell
-              f += this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos);
-              if (f > 1) {
-                this.cells[c].corners[cp].show();
-              }
+          f = 0;
+          for (var b = 0; b < this.balls.length; b++) {
+            // Accumulate f for each metaball relative to this cell
+            f += this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos);
+            if (f > 1) {
+              this.cells[c].corners[cp].show();
             }
+          }
 
-            if (this.visible === false) {
-              this.cells[c].corners[cp].clearLabel();
-              continue;
-            }
+          if (this.visible === false) {
+            this.cells[c].corners[cp].clearLabel();
+            continue;
+          }
 
-            // Update label
-            var screenPos = this.cells[c].corners[cp].pos.project(this.camera);
-            screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
-            screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
-            this.cells[c].corners[cp].updateLabel(screenPos, f.toFixed(2), f - 0.5);
+          // Update label
+          var screenPos = this.cells[c].corners[cp].pos.clone().project(this.camera);
+          screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
+          screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
+          this.cells[c].corners[cp].updateLabel(screenPos, f.toFixed(2), f - 0.5);
         }
       }
     }
