@@ -26,14 +26,14 @@ function onLoad(framework) {
 
   // ===== Construct grid ====== //
 
-  var gridRes = 2;
+  var gridRes = 1;
   var gridWidth = 10;
   var config = {
     gridRes: gridRes,
     gridWidth: gridWidth,
     gridCellWidth: gridWidth / gridRes,
-    numMetaballs: 10,
-    maxRadius: 5,
+    numMetaballs: 1,
+    maxRadius: 20,
     maxSpeed: 0.1
   };
 
@@ -133,7 +133,7 @@ var Grid = function(config, framework) {
   // LOOK
   var Cell = function(x, y, z) {
 
-    var SamplingPoint = function(pos, isovalue, color, visible) {
+    var Inspectpoint = function(pos, isovalue, color, visible) {
 
       this.pos = pos;
       this.isovalue = isovalue;
@@ -163,18 +163,6 @@ var Grid = function(config, framework) {
 
       };
 
-      this.updateLabel = function(screenPos, text, opacity) {
-        this.label.style.top = screenPos.y + 'px';
-        this.label.style.left = screenPos.x + 'px';
-        this.label.innerHTML = text;
-        this.label.style.opacity = opacity;
-      }
-
-      this.clearLabel = function() {
-        this.label.innerHTML = '';
-        this.label.style.opacity = 0;
-      }
-
       this.show = function() {
         this.mesh.visible = true;
       }
@@ -184,73 +172,113 @@ var Grid = function(config, framework) {
         this.clearLabel();
       }
 
+      this.updatePosition = function(newPos) {
+        if (this.mesh !== null && this.mesh !== undefined) {
+          this.mesh.position.set(newPos.x, newPos.y, newPos.z);
+          this.show();
+        }
+      }
+
+      this.updateLabel = function(camera) {
+
+        var screenPos = this.pos.clone().project(camera);
+        screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
+        screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
+
+        this.label.style.top = screenPos.y + 'px';
+        this.label.style.left = screenPos.x + 'px';
+        this.label.innerHTML = this.isovalue.toFixed(2);
+        this.label.style.opacity = this.isovalue - 0.5;
+      }
+
+      this.clearLabel = function() {
+        this.label.innerHTML = '';
+        this.label.style.opacity = 0;
+      }
+
       this.init();
     }
 
-    var halfGridCellWidth = config.gridCellWidth / 2.0;
+    this.init = function() {
+      var halfGridCellWidth = config.gridCellWidth / 2.0;
 
-    var green = 0x00ff00;
+      var green = 0x00ff00;
+      var red = 0xff0000;
 
-    var positions = new Float32Array([
-      // Front face
-       halfGridCellWidth, halfGridCellWidth,  halfGridCellWidth,
-       halfGridCellWidth, -halfGridCellWidth, halfGridCellWidth,
-      -halfGridCellWidth, -halfGridCellWidth, halfGridCellWidth,
-      -halfGridCellWidth, halfGridCellWidth,  halfGridCellWidth,
+      var positions = new Float32Array([
+        // Front face
+         halfGridCellWidth, halfGridCellWidth,  halfGridCellWidth,
+         halfGridCellWidth, -halfGridCellWidth, halfGridCellWidth,
+        -halfGridCellWidth, -halfGridCellWidth, halfGridCellWidth,
+        -halfGridCellWidth, halfGridCellWidth,  halfGridCellWidth,
 
-      // Back face
-      -halfGridCellWidth,  halfGridCellWidth, -halfGridCellWidth,
-      -halfGridCellWidth, -halfGridCellWidth, -halfGridCellWidth,
-       halfGridCellWidth, -halfGridCellWidth, -halfGridCellWidth,
-       halfGridCellWidth,  halfGridCellWidth, -halfGridCellWidth,
-    ]);
+        // Back face
+        -halfGridCellWidth,  halfGridCellWidth, -halfGridCellWidth,
+        -halfGridCellWidth, -halfGridCellWidth, -halfGridCellWidth,
+         halfGridCellWidth, -halfGridCellWidth, -halfGridCellWidth,
+         halfGridCellWidth,  halfGridCellWidth, -halfGridCellWidth,
+      ]);
 
-    var indices = new Uint16Array([
-      0, 1, 2, 3,
-      4, 5, 6, 7,
-      0, 7, 7, 4,
-      4, 3, 3, 0,
-      1, 6, 6, 5,
-      5, 2, 2, 1
-    ]);
+      var indices = new Uint16Array([
+        0, 1, 2, 3,
+        4, 5, 6, 7,
+        0, 7, 7, 4,
+        4, 3, 3, 0,
+        1, 6, 6, 5,
+        5, 2, 2, 1
+      ]);
 
-    // Buffer geometry
-    var geo = new THREE.BufferGeometry();
-    geo.setIndex( new THREE.BufferAttribute( indices, 1 ) );
-    geo.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+      // Buffer geometry
+      var geo = new THREE.BufferGeometry();
+      geo.setIndex( new THREE.BufferAttribute( indices, 1 ) );
+      geo.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
 
-    // Material
-    var mat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 10 } );
+      // Material
+      var mat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 10 } );
 
-    // Wireframe line segments
-    this.wireframe = new THREE.LineSegments( geo, mat );
-    this.wireframe.position.set(x, y, z);
+      // Wireframe line segments
+      this.wireframe = new THREE.LineSegments( geo, mat );
+      this.wireframe.position.set(x, y, z);
 
-    // Green cube
-    geo = new THREE.BoxBufferGeometry(config.gridCellWidth, config.gridCellWidth, config.gridCellWidth);
-    mat = new THREE.MeshBasicMaterial( { color: 0x00ee00, transparent: true, opacity: 0.5 });
-    this.mesh = new THREE.Mesh( geo, mat );
-    this.mesh.position.set(x, y, z);
-    this.mesh.visible = false;
+      // Green cube
+      geo = new THREE.BoxBufferGeometry(config.gridCellWidth, config.gridCellWidth, config.gridCellWidth);
+      mat = new THREE.MeshBasicMaterial( { color: 0x00ee00, transparent: true, opacity: 0.5 });
+      this.mesh = new THREE.Mesh( geo, mat );
+      this.mesh.position.set(x, y, z);
+      this.mesh.visible = false;
 
-    // Label
+      // Center dot
+      this.center = new Inspectpoint(new THREE.Vector3(x, y, z), 0, 0x0, true);
 
-    // Center dot
-    this.center = new SamplingPoint(new THREE.Vector3(x, y, z), 0, 0x0, true);
+      // Corners
+      this.corners = [
+        new Inspectpoint(new THREE.Vector3(-halfGridCellWidth + x, -halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
+        new Inspectpoint(new THREE.Vector3(halfGridCellWidth + x, -halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
+        new Inspectpoint(new THREE.Vector3(halfGridCellWidth + x, -halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false),
+        new Inspectpoint(new THREE.Vector3(-halfGridCellWidth + x, -halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false),
+        new Inspectpoint(new THREE.Vector3(-halfGridCellWidth + x, halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
+        new Inspectpoint(new THREE.Vector3(halfGridCellWidth + x, halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
+        new Inspectpoint(new THREE.Vector3(halfGridCellWidth + x, halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false),
+        new Inspectpoint(new THREE.Vector3(-halfGridCellWidth + x, halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false)
+      ];
 
-    // Corners
-    this.corners = [
-      new SamplingPoint(new THREE.Vector3(-halfGridCellWidth + x, -halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
-      new SamplingPoint(new THREE.Vector3(halfGridCellWidth + x, -halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
-      new SamplingPoint(new THREE.Vector3(halfGridCellWidth + x, -halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false),
-      new SamplingPoint(new THREE.Vector3(-halfGridCellWidth + x, -halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false),
-      new SamplingPoint(new THREE.Vector3(-halfGridCellWidth + x, halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
-      new SamplingPoint(new THREE.Vector3(halfGridCellWidth + x, halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
-      new SamplingPoint(new THREE.Vector3(halfGridCellWidth + x, halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false),
-      new SamplingPoint(new THREE.Vector3(-halfGridCellWidth + x, halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false)
-    ];
+      // Edges
+      this.edges = [
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+        new Inspectpoint(new THREE.Vector3(0, 0, 0), 0, red, false),
+      ];
 
-    // Edges
+    }
 
     this.show = function() {
       this.mesh.visible = true;
@@ -267,6 +295,75 @@ var Grid = function(config, framework) {
           this.corners[cp].hide();
       }
     }
+
+    this.polygonize = function(isolevel) {
+
+      var LUTIndex = 0;
+      var corner, edges, alpha;
+
+      // Check which edges are intersected based on isovalues at each corners
+      for (corner = 0; corner < 8; corner++) {
+        if (this.corners[corner].isovalue > isolevel) {
+          LUTIndex = LUTIndex | (1 << corner);
+        }
+      }
+
+      edges = LUT.EDGE_TABLE[LUTIndex];
+      if (edges === 0) {
+        return;
+      }
+
+      if ((edges & 1) > 0) {
+        this.edges[0].isovalue = (isolevel - this.corners[0].isovalue) / (this.corners[1].isovalue - this.corners[0].isovalue);
+        this.edges[0].updatePosition(this.corners[0].pos.clone().lerp(this.corners[1].pos, this.edges[0].isovalue));
+      }
+      if ((edges & 2) > 0) {
+        this.edges[1].isovalue = (isolevel - this.corners[1].isovalue) / (this.corners[2].isovalue - this.corners[1].isovalue);
+        this.edges[1].updatePosition(this.corners[1].pos.clone().lerp(this.corners[2].pos, this.edges[1].isovalue));
+      }
+      if ((edges & 4) > 0) {
+        this.edges[2].isovalue = (isolevel - this.corners[2].isovalue) / (this.corners[3].isovalue - this.corners[2].isovalue);
+        this.edges[2].updatePosition(this.corners[2].pos.clone().lerp(this.corners[3].pos, this.edges[2].isovalue));
+      }
+      if ((edges & 8) > 0) {
+        this.edges[3].isovalue = (isolevel - this.corners[3].isovalue) / (this.corners[0].isovalue - this.corners[3].isovalue);
+        this.edges[3].updatePosition(this.corners[3].pos.clone().lerp(this.corners[0].pos, this.edges[3].isovalue));
+      }
+      if ((edges & 16) > 0) {
+        this.edges[4].isovalue = (isolevel - this.corners[4].isovalue) / (this.corners[5].isovalue - this.corners[4].isovalue);
+        this.edges[4].updatePosition(this.corners[4].pos.clone().lerp(this.corners[5].pos, this.edges[4].isovalue));
+      }
+      if ((edges & 32) > 0) {
+        this.edges[5].isovalue = (isolevel - this.corners[5].isovalue) / (this.corners[6].isovalue - this.corners[5].isovalue);
+        this.edges[5].updatePosition(this.corners[5].pos.clone().lerp(this.corners[6].pos, this.edges[5].isovalue));
+      }
+      if ((edges & 64) > 0) {
+        this.edges[6].isovalue = (isolevel - this.corners[6].isovalue) / (this.corners[7].isovalue - this.corners[7].isovalue);
+        this.edges[6].updatePosition(this.corners[6].pos.clone().lerp(this.corners[7].pos, this.edges[6].isovalue));
+      }
+      if ((edges & 128) > 0) {
+        this.edges[7].isovalue = (isolevel - this.corners[7].isovalue) / (this.corners[4].isovalue - this.corners[7].isovalue);
+        this.edges[7].updatePosition(this.corners[7].pos.clone().lerp(this.corners[4].pos, this.edges[7].isovalue));
+      }
+      if ((edges & 256) > 0) {
+        this.edges[9].isovalue = (isolevel - this.corners[4].isovalue) / (this.corners[0].isovalue - this.corners[4].isovalue);
+        this.edges[8].updatePosition(this.corners[4].pos.clone().lerp(this.corners[0].pos, this.edges[8].isovalue));
+      }
+      if ((edges & 512) > 0) {
+        this.edges[9].isovalue = (isolevel - this.corners[5].isovalue) / (this.corners[1].isovalue - this.corners[5].isovalue);
+        this.edges[9].updatePosition(this.corners[5].pos.clone().lerp(this.corners[1].pos, this.edges[9].isovalue));
+      }
+      if ((edges & 1024) > 0) {
+        this.edges[10].isovalue = (isolevel - this.corners[6].isovalue) / (this.corners[2].isovalue - this.corners[6].isovalue);
+        this.edges[10].updatePosition(this.corners[6].pos.clone().lerp(this.corners[2].pos, this.edges[10].isovalue));
+      }
+      if ((edges & 2048) > 0) {
+        this.edges[11].isovalue = (isolevel - this.corners[7].isovalue) / (this.corners[3].isovalue - this.corners[7].isovalue);
+        this.edges[11].updatePosition(this.corners[7].pos.clone().lerp(this.corners[3].pos, this.edges[11].isovalue));
+      }
+    }
+
+    this.init();
   }
 
   this.maxRadius = config.maxRadius;
@@ -300,6 +397,9 @@ var Grid = function(config, framework) {
       for (var cp = 0; cp < 8; cp++) {
         framework.scene.add(cell.corners[cp].mesh);
       }
+      for (var e = 0; e < 12; e++) {
+        framework.scene.add(cell.edges[e].mesh);
+      }
 
       this.cells.push(cell);
     }
@@ -331,9 +431,6 @@ var Grid = function(config, framework) {
 
   this.update = function(framework) {
 
-    var screenPos;
-    var f = 0;
-
     // Reset grid state
     for (var c = 0; c < this.res3; c++) {
       // Clear cells
@@ -345,26 +442,23 @@ var Grid = function(config, framework) {
       // -- SAMPLE AT CENTER
       // Color cells that have a sample > 1 at the center
       for (var c = 0; c < this.res3; c++) {
-        f = 0;
+        this.cells[c].center.isovalue = 0;
         for (var b = 0; b < this.balls.length; b++) {
           // Accumulate f for each metaball relative to this cell
-          f += this.balls[b].radius2 / this.cells[c].center.pos.distanceToSquared(this.balls[b].pos);
-          if (f > 1) {
+          this.cells[c].center.isovalue += this.balls[b].radius2 / this.cells[c].center.pos.distanceToSquared(this.balls[b].pos);
+          if (this.cells[c].center.isovalue > 1) {
             this.cells[c].mesh.visible = true;
             this.cells[c].center.show();
           }
         }
 
+        // Update label
         if (this.visible === false) {
           this.cells[c].center.clearLabel();
           continue;
         }
 
-        // Update label
-        var screenPos = this.cells[c].center.pos.clone().project(this.camera);
-        screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
-        screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
-        this.cells[c].center.updateLabel(screenPos, f.toFixed(2), f - 0.5);
+        this.cells[c].center.updateLabel(this.camera);
       }
     } else if (this.samplingPoint === SamplingPointEnum.CORNERS) {
 
@@ -372,25 +466,31 @@ var Grid = function(config, framework) {
       // Color cells that have a sample > 1 at the corners
       for (var c = 0; c < this.res3; c++) {
         for (var cp = 0; cp < 8; cp++) {
-          f = 0;
+          this.cells[c].corners[cp].isovalue = 0;
           for (var b = 0; b < this.balls.length; b++) {
             // Accumulate f for each metaball relative to this cell
-            f += this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos);
-            if (f > 1) {
+            this.cells[c].corners[cp].isovalue += this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos);
+            if (cp === 3) {
+              this.cells[c].corners[3].isovalue = 1;
+            } else {
+              this.cells[c].corners[cp].isovalue = 0;
+            }
+            if (this.cells[c].corners[cp].isovalue > 1) {
               this.cells[c].corners[cp].show();
             }
           }
 
+
+          // Draw edges
+          this.cells[c].polygonize(1);
+
+          // Update label
           if (this.visible === false) {
             this.cells[c].corners[cp].clearLabel();
             continue;
           }
 
-          // Update label
-          var screenPos = this.cells[c].corners[cp].pos.clone().project(this.camera);
-          screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
-          screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
-          this.cells[c].corners[cp].updateLabel(screenPos, f.toFixed(2), f - 0.5);
+          this.cells[c].corners[cp].updateLabel(this.camera);
         }
       }
     }
