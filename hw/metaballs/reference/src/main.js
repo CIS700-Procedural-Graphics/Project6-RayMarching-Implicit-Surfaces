@@ -8,6 +8,10 @@ import Framework from './framework'
 import Noise from './improved_noise.js'
 import LUT from './marching_cube_LUT.js'
 
+var SamplingPointEnum = {
+CENTER: 0,
+CORNERS: 1
+};
 
 // called after the scene loads
 function onLoad(framework) {
@@ -22,15 +26,15 @@ function onLoad(framework) {
 
   // ===== Construct grid ====== //
 
-  var gridRes = 10;
-  var gridWidth = 20;
+  var gridRes = 2;
+  var gridWidth = 10;
   var config = {
-    gridRes: 10,
-    gridWidth: 20,
+    gridRes: gridRes,
+    gridWidth: gridWidth,
     gridCellWidth: gridWidth / gridRes,
     numMetaballs: 10,
-    maxRadius: 3,
-    maxSpeed: 0.10
+    maxRadius: 5,
+    maxSpeed: 0.1
   };
 
   framework.grid = new Grid(config, framework);
@@ -43,11 +47,20 @@ function onLoad(framework) {
       window.location.reload();
     }
     this.speed = config.maxSpeed / 2.0;
+    this.samplingCorners = true
   }
   var guiControls = new GUIControls();
   gui.add(guiControls, 'restart');
   gui.add(guiControls, 'speed', 0, config.maxSpeed).onChange(function(value) {
 
+  });
+
+  gui.add(guiControls, 'samplingCorners').onChange(function(value) {
+    if (value) {
+        framework.grid.samplingPoint = SamplingPointEnum.CORNERS;
+    } else {
+        framework.grid.samplingPoint = SamplingPointEnum.CENTER;
+    }
   });
 
   // --- DEBUG ---
@@ -66,12 +79,12 @@ function onLoad(framework) {
   });
   debugFolder.add(debug, 'showSpheres').onChange(function(value) {
     if (value) {
-      for (var i = 0; i < numMetaballs; i++) {
-        framework.balls[i].show();
+      for (var i = 0; i < config.numMetaballs; i++) {
+        framework.grid.balls[i].show();
       }
     } else {
-      for (var i = 0; i < numMetaballs; i++) {
-        framework.balls[i].hide();
+      for (var i = 0; i < config.numMetaballs; i++) {
+        framework.grid.balls[i].hide();
       }
     }
   });
@@ -117,28 +130,79 @@ function setupLights(scene) {
 // LOOK
 var Grid = function(config, framework) {
 
-  var SamplingPointEnum = {
-    CENTER: 0,
-    CORNERS: 1
-  };
-
   // LOOK
   var Cell = function(x, y, z) {
 
-    this.pos = new THREE.Vector3(x, y, z);
+    var SamplingPoint = function(pos, isovalue, color, visible) {
+
+      this.pos = pos;
+      this.isovalue = isovalue;
+      this.mesh = null;
+      this.label = null;
+
+      this.init = function() {
+        var geo, mat;
+
+        // Geometry
+        geo = new THREE.Geometry();
+        geo.vertices.push(pos);
+        mat = new THREE.PointsMaterial( { color: color, size: 5, sizeAttenuation: false } );
+        this.mesh = new THREE.Points( geo, mat );
+        this.mesh.visible = visible;
+
+        // Label
+        this.label = document.createElement('div');
+        this.label.style.position = 'absolute';
+        this.label.style.width = 100;
+        this.label.style.height = 100;
+        this.label.style.userSelect = 'none';
+        this.label.style.cursor = 'default';
+        this.label.style.fontSize = '0.3em';
+        this.label.style.pointerEvents = 'none';
+        document.body.appendChild(this.label);
+
+      };
+
+      this.updateLabel = function(screenPos, text, opacity) {
+        this.label.style.top = screenPos.y + 'px';
+        this.label.style.left = screenPos.x + 'px';
+        this.label.innerHTML = text;
+        this.label.style.opacity = opacity;
+
+      }
+
+      this.clearLabel = function() {
+        this.label.innerHTML = '';
+        this.label.style.opacity = 0;
+      }
+
+      this.show = function() {
+        this.mesh.visible = true;
+      }
+
+      this.hide = function() {
+        this.mesh.visible = false;
+      }
+
+      this.init();
+    }
+
+    var halfGridCellWidth = config.gridCellWidth / 2.0;
+
+    var green = 0x00ff00;
 
     var positions = new Float32Array([
       // Front face
-       0.5, 0.5,  0.5,
-       0.5, -0.5, 0.5,
-      -0.5, -0.5, 0.5,
-      -0.5, 0.5,  0.5,
+       halfGridCellWidth, halfGridCellWidth,  halfGridCellWidth,
+       halfGridCellWidth, -halfGridCellWidth, halfGridCellWidth,
+      -halfGridCellWidth, -halfGridCellWidth, halfGridCellWidth,
+      -halfGridCellWidth, halfGridCellWidth,  halfGridCellWidth,
 
       // Back face
-      -0.5,  0.5, -0.5,
-      -0.5, -0.5, -0.5,
-       0.5, -0.5, -0.5,
-       0.5,  0.5, -0.5,
+      -halfGridCellWidth,  halfGridCellWidth, -halfGridCellWidth,
+      -halfGridCellWidth, -halfGridCellWidth, -halfGridCellWidth,
+       halfGridCellWidth, -halfGridCellWidth, -halfGridCellWidth,
+       halfGridCellWidth,  halfGridCellWidth, -halfGridCellWidth,
     ]);
 
     var indices = new Uint16Array([
@@ -161,7 +225,6 @@ var Grid = function(config, framework) {
     // Wireframe line segments
     this.wireframe = new THREE.LineSegments( geo, mat );
     this.wireframe.position.set(x, y, z);
-    this.wireframe.scale.set(config.gridCellWidth, config.gridCellWidth, config.gridCellWidth);
 
     // Green cube
     geo = new THREE.BoxBufferGeometry(config.gridCellWidth, config.gridCellWidth, config.gridCellWidth);
@@ -171,33 +234,38 @@ var Grid = function(config, framework) {
     this.mesh.visible = false;
 
     // Label
-    this.label = document.createElement('div');
-    this.label.style.position = 'absolute';
-    this.label.style.width = 100;
-    this.label.style.height = 100;
-    this.label.style.userSelect = 'none';
-    this.label.style.cursor = 'default';
-    this.label.style.fontSize = '0.3em';
-    this.label.style.pointerEvents = 'none';
-    document.body.appendChild(this.label);
 
     // Center dot
-    geo = new THREE.Geometry();
-    geo.vertices.push(new THREE.Vector3( x, y, z));
-    mat = new THREE.PointsMaterial( { color: 0, size: 3, sizeAttenuation: false } );
-    this.centerMesh = new THREE.Points( geo, mat );
-    this.centerMesh.visible = false;
+    this.center = new SamplingPoint(new THREE.Vector3(x, y, z), 0, 0x0, true);
 
-    this.updateLabel = function(screenPos, text, opacity) {
-      this.label.style.top = screenPos.y + 'px';
-      this.label.style.left = screenPos.x + 'px';
-      this.label.innerHTML = text;
-      this.label.style.opacity = opacity;
+    // Corners
+    this.corners = [
+      new SamplingPoint(new THREE.Vector3(-halfGridCellWidth + x, -halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
+      new SamplingPoint(new THREE.Vector3(halfGridCellWidth + x, -halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
+      new SamplingPoint(new THREE.Vector3(halfGridCellWidth + x, -halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false),
+      new SamplingPoint(new THREE.Vector3(-halfGridCellWidth + x, -halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false),
+      new SamplingPoint(new THREE.Vector3(-halfGridCellWidth + x, halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
+      new SamplingPoint(new THREE.Vector3(halfGridCellWidth + x, halfGridCellWidth + y, -halfGridCellWidth + z), 0, green, false),
+      new SamplingPoint(new THREE.Vector3(halfGridCellWidth + x, halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false),
+      new SamplingPoint(new THREE.Vector3(-halfGridCellWidth + x, halfGridCellWidth + y, halfGridCellWidth + z), 0, green, false)
+    ];
+
+    // Edges
+
+    this.show = function() {
+      this.mesh.visible = true;
+      this.center.center.show();
+      for (var cp = 0; cp < 8; cp++) {
+          this.corners[cp].show();
+      }
     }
 
-    this.clearLabel = function() {
-      this.label.innerHTML = '';
-      this.label.style.opacity = 0;
+    this.hide = function() {
+      this.mesh.visible = false;
+      this.center.hide();
+      for (var cp = 0; cp < 8; cp++) {
+          this.corners[cp].hide();
+      }
     }
   }
 
@@ -215,7 +283,7 @@ var Grid = function(config, framework) {
   this.labels = [];
   this.camera = framework.camera;
   this.visible = true;
-  this.samplingPoint = SamplingPointEnum.CENTER;
+  this.samplingPoint = SamplingPointEnum.CORNERS;
   this.balls = [];
 
   this.init = function() {
@@ -228,7 +296,11 @@ var Grid = function(config, framework) {
 
       framework.scene.add(cell.wireframe);
       framework.scene.add(cell.mesh);
-      framework.scene.add(cell.centerMesh);
+      framework.scene.add(cell.center.mesh);
+      for (var cp = 0; cp < 8; cp++) {
+        framework.scene.add(cell.corners[cp].mesh);
+      }
+
       this.cells.push(cell);
     }
 
@@ -265,40 +337,62 @@ var Grid = function(config, framework) {
     // Reset grid state
     for (var c = 0; c < this.res3; c++) {
       // Clear cells
-      this.cells[c].mesh.visible = false;
-      this.cells[c].centerMesh.visible = false;
+      this.cells[c].hide();
     }
 
     if (this.samplingPoint === SamplingPointEnum.CENTER) {
+
       // -- SAMPLE AT CENTER
       // Color cells that have a sample > 1 at the center
       for (var c = 0; c < this.res3; c++) {
         f = 0;
         for (var b = 0; b < this.balls.length; b++) {
           // Accumulate f for each metaball relative to this cell
-          f += this.balls[b].radius2 / this.cells[c].pos.distanceToSquared(this.balls[b].pos);
+          f += this.balls[b].radius2 / this.cells[c].center.pos.distanceToSquared(this.balls[b].pos);
           if (f > 1) {
             this.cells[c].mesh.visible = true;
-            this.cells[c].centerMesh.visible = true;
+            this.cells[c].center.show();
           }
         }
 
         if (this.visible === false) {
-          this.cells[c].clearLabel();
+          this.cells[c].center.clearLabel();
           continue;
         }
-        var i3 = this.i1toi3(c);
-        var pos = this.i3toPos(i3);
-        var {x, y, z} = pos;
 
-        // Update grid value
-        var screenPos = pos.project(this.camera);
+        // Update label
+        var screenPos = this.cells[c].center.pos.project(this.camera);
         screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
         screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
-        this.cells[c].updateLabel(screenPos, f.toFixed(2), f - 0.5);
+        this.cells[c].center.updateLabel(screenPos, f.toFixed(2), f - 0.5);
       }
-    } else if (this.samplingPoint === SamplingPoint.CORNERS) {
+    } else if (this.samplingPoint === SamplingPointEnum.CORNERS) {
 
+      // -- SAMPLE AT CORNERS
+      // Color cells that have a sample > 1 at the corners
+      for (var c = 0; c < this.res3; c++) {
+        for (var cp = 0; cp < 8; cp++) {
+            f = 0;
+            for (var b = 0; b < this.balls.length; b++) {
+              // Accumulate f for each metaball relative to this cell
+              f += this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos);
+              if (f > 1) {
+                this.cells[c].corners[cp].show();
+              }
+            }
+
+            if (this.visible === false) {
+              this.cells[c].corners[cp].clearLabel();
+              continue;
+            }
+
+            // Update label
+            var screenPos = this.cells[c].corners[cp].pos.project(this.camera);
+            screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
+            screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
+            this.cells[c].corners[cp].updateLabel(screenPos, f.toFixed(2), f - 0.5);
+        }
+      }
     }
 
     // Move metaballs
@@ -399,88 +493,7 @@ var Metaball = function(pos, radius, vel, gridWidth) {
 
 function generateMetaball(scene) {
 
-  // for (var i = 0; i < size; i++) {
 
-  // // -- populate field by inverse distanceSquared
-  //   var dis2 = position.distanceToSquared(new THREE.Vector3(x, y, z));
-  //   if (dis2 < radius2) {
-
-  //     // Generate a density value if within range
-  //     field[i] = strength / dis2;
-
-  //     if (scene.debug) {
-  //       // Draw sphere based on strength
-  //       var sphere = new THREE.SphereBufferGeometry(field[i] / 10, 32, 32);
-  //       var mesh = new THREE.Mesh(sphere, matLambertWhite);
-  //       mesh.position.x = x;
-  //       mesh.position.y = y;
-  //       mesh.position.z = z;
-  //       scene.add(mesh);
-  //     }
-  //   } else {
-  //     field[i] = 0;
-  //   }
-  // }
-
-  // field = [];
-  // for (var i = 0; i < size; i++) {
-
-  //   // 1. Find out what are the 8 values at each cell corner
-  //   var i3 = i1toi3(i, width, height, depth);
-  //   var voxelPos = i3toPos(i3, voxelWidth, gridOrigin);
-  //   var LUTIndex = 0;
-
-  //   // -- Eight corners
-  //   var corners = [
-  //     new THREE.Vector3(
-  //                   voxelPos.x - halfVoxelWidth,
-  //                   voxelPos.y - halfVoxelWidth,
-  //                   voxelPos.z - halfVoxelWidth
-  //                   ),
-
-
-  //     new THREE.Vector3(
-  //                   voxelPos.x - halfVoxelWidth,
-  //                   voxelPos.y + halfVoxelWidth,
-  //                   voxelPos.z - halfVoxelWidth
-  //                   ),
-
-  //     new THREE.Vector3(
-  //                   voxelPos.x + halfVoxelWidth,
-  //                   voxelPos.y + halfVoxelWidth,
-  //                   voxelPos.z - halfVoxelWidth
-  //                   ),
-
-  //     new THREE.Vector3(
-  //                   voxelPos.x + halfVoxelWidth,
-  //                   voxelPos.y - halfVoxelWidth,
-  //                   voxelPos.z - halfVoxelWidth
-  //                   ),
-
-  //     new THREE.Vector3(
-  //                   voxelPos.x - halfVoxelWidth,
-  //                   voxelPos.y - halfVoxelWidth,
-  //                   voxelPos.z + halfVoxelWidth
-  //                   ),
-
-  //     new THREE.Vector3(
-  //                   voxelPos.x - halfVoxelWidth,
-  //                   voxelPos.y + halfVoxelWidth,
-  //                   voxelPos.z + halfVoxelWidth
-  //                   ),
-
-  //     new THREE.Vector3(
-  //                   voxelPos.x + halfVoxelWidth,
-  //                   voxelPos.y + halfVoxelWidth,
-  //                   voxelPos.z + halfVoxelWidth
-  //                   ),
-
-  //     new THREE.Vector3(
-  //                   voxelPos.x + halfVoxelWidth,
-  //                   voxelPos.y - halfVoxelWidth,
-  //                   voxelPos.z + halfVoxelWidth
-  //                   )
-  //     ];
 
   //   for (var corner = 0; corner < 8; corner++) {
   //     // console.log("Corners " + corner + ": " + vec3ToString(corners[corner]) + " for voxelPos: " + vec3ToString(voxelPos));
