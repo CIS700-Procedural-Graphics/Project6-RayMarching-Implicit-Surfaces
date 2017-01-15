@@ -5,6 +5,6 @@ module.exports = {
   },
   hw01_base: {
     directory: "hw/noise/base",
-    repo: "git@github.com:CIS700-Procedural-Graphics/HW1-Noise.git",
+    repo: "git@github.com:CIS700-Procedural-Graphics/Project1-Noise.git",
   }
 }
