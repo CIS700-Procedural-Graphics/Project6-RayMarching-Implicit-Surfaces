@@ -23,6 +23,19 @@ h1 {
   margin-top: 30px;
 }
 
+h2 {
+  margin-top: 40px;
+}
+
 a {
   color: #6896ba;
 }
+
+table {
+  td, th {
+    padding: 5px;
+    border: 1px solid white;
+  }
+}
+
+@import 'nav'
