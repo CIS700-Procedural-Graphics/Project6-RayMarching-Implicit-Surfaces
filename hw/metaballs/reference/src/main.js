@@ -26,14 +26,14 @@ function onLoad(framework) {
 
   // ===== Construct grid ====== //
 
-  var gridRes = 1;
+  var gridRes = 4;
   var gridWidth = 10;
   var config = {
     gridRes: gridRes,
     gridWidth: gridWidth,
     gridCellWidth: gridWidth / gridRes,
-    numMetaballs: 1,
-    maxRadius: 20,
+    numMetaballs: 10,
+    maxRadius: 1,
     maxSpeed: 0.1
   };
 
@@ -313,55 +313,81 @@ var Grid = function(config, framework) {
         return;
       }
 
-      if ((edges & 1) > 0) {
-        this.edges[0].isovalue = (isolevel - this.corners[0].isovalue) / (this.corners[1].isovalue - this.corners[0].isovalue);
-        this.edges[0].updatePosition(this.corners[0].pos.clone().lerp(this.corners[1].pos, this.edges[0].isovalue));
+      // Bottom of the cube
+
+      // if ((edges & 1) > 0) {
+      //   this.edges[0].isovalue = (isolevel - this.corners[0].isovalue) / (this.corners[1].isovalue - this.corners[0].isovalue);
+      //   this.edges[0].updatePosition(this.corners[0].pos.clone().lerp(this.corners[1].pos, this.edges[0].isovalue));
+      // }
+      // if ((edges & 2) > 0) {
+      //   this.edges[1].isovalue = (isolevel - this.corners[1].isovalue) / (this.corners[2].isovalue - this.corners[1].isovalue);
+      //   this.edges[1].updatePosition(this.corners[1].pos.clone().lerp(this.corners[2].pos, this.edges[1].isovalue));
+      // }
+      // if ((edges & 4) > 0) {
+      //   this.edges[2].isovalue = (isolevel - this.corners[2].isovalue) / (this.corners[3].isovalue - this.corners[2].isovalue);
+      //   this.edges[2].updatePosition(this.corners[2].pos.clone().lerp(this.corners[3].pos, this.edges[2].isovalue));
+      // }
+      // if ((edges & 8) > 0) {
+      //   this.edges[3].isovalue = (isolevel - this.corners[3].isovalue) / (this.corners[0].isovalue - this.corners[3].isovalue);
+      //   this.edges[3].updatePosition(this.corners[3].pos.clone().lerp(this.corners[0].pos, this.edges[3].isovalue));
+      // }
+
+      // // Top of the cube
+
+      // if ((edges & 16) > 0) {
+      //   this.edges[4].isovalue = (isolevel - this.corners[4].isovalue) / (this.corners[5].isovalue - this.corners[4].isovalue);
+      //   this.edges[4].updatePosition(this.corners[4].pos.clone().lerp(this.corners[5].pos, this.edges[4].isovalue));
+      // }
+      // if ((edges & 32) > 0) {
+      //   this.edges[5].isovalue = (isolevel - this.corners[5].isovalue) / (this.corners[6].isovalue - this.corners[5].isovalue);
+      //   this.edges[5].updatePosition(this.corners[5].pos.clone().lerp(this.corners[6].pos, this.edges[5].isovalue));
+      // }
+      // if ((edges & 64) > 0) {
+      //   this.edges[6].isovalue = (isolevel - this.corners[6].isovalue) / (this.corners[7].isovalue - this.corners[7].isovalue);
+      //   this.edges[6].updatePosition(this.corners[6].pos.clone().lerp(this.corners[7].pos, this.edges[6].isovalue));
+      // }
+      // if ((edges & 128) > 0) {
+      //   this.edges[7].isovalue = (isolevel - this.corners[7].isovalue) / (this.corners[4].isovalue - this.corners[7].isovalue);
+      //   this.edges[7].updatePosition(this.corners[7].pos.clone().lerp(this.corners[4].pos, this.edges[7].isovalue));
+      // }
+
+      // // Vertical lines of the cube
+
+      // if ((edges & 256) > 0) {
+      //   this.edges[9].isovalue = (isolevel - this.corners[4].isovalue) / (this.corners[0].isovalue - this.corners[4].isovalue);
+      //   this.edges[8].updatePosition(this.corners[4].pos.clone().lerp(this.corners[0].pos, this.edges[8].isovalue));
+      // }
+      // if ((edges & 512) > 0) {
+      //   this.edges[9].isovalue = (isolevel - this.corners[5].isovalue) / (this.corners[1].isovalue - this.corners[5].isovalue);
+      //   this.edges[9].updatePosition(this.corners[5].pos.clone().lerp(this.corners[1].pos, this.edges[9].isovalue));
+      // }
+      // if ((edges & 1024) > 0) {
+      //   this.edges[10].isovalue = (isolevel - this.corners[6].isovalue) / (this.corners[2].isovalue - this.corners[6].isovalue);
+      //   this.edges[10].updatePosition(this.corners[6].pos.clone().lerp(this.corners[2].pos, this.edges[10].isovalue));
+      // }
+      // if ((edges & 2048) > 0) {
+      //   this.edges[11].isovalue = (isolevel - this.corners[7].isovalue) / (this.corners[3].isovalue - this.corners[7].isovalue);
+      //   this.edges[11].updatePosition(this.corners[7].pos.clone().lerp(this.corners[3].pos, this.edges[11].isovalue));
+      // }
+
+      // Create triangles
+      LUTIndex <<= 4; // re-purpose into offset to triangle table
+
+      var i = 0,
+      		o1, o2, o3, numTris = 0;
+
+      while (LUT.TRI_TABLE[LUTIndex + i] != -1) {
+
+      	o1 = LUTIndex + i;
+      	o2 = o1 + 1;
+      	o3 = o1 + 2;
+
+      	i += 3;
+      	numTris++;
+
       }
-      if ((edges & 2) > 0) {
-        this.edges[1].isovalue = (isolevel - this.corners[1].isovalue) / (this.corners[2].isovalue - this.corners[1].isovalue);
-        this.edges[1].updatePosition(this.corners[1].pos.clone().lerp(this.corners[2].pos, this.edges[1].isovalue));
-      }
-      if ((edges & 4) > 0) {
-        this.edges[2].isovalue = (isolevel - this.corners[2].isovalue) / (this.corners[3].isovalue - this.corners[2].isovalue);
-        this.edges[2].updatePosition(this.corners[2].pos.clone().lerp(this.corners[3].pos, this.edges[2].isovalue));
-      }
-      if ((edges & 8) > 0) {
-        this.edges[3].isovalue = (isolevel - this.corners[3].isovalue) / (this.corners[0].isovalue - this.corners[3].isovalue);
-        this.edges[3].updatePosition(this.corners[3].pos.clone().lerp(this.corners[0].pos, this.edges[3].isovalue));
-      }
-      if ((edges & 16) > 0) {
-        this.edges[4].isovalue = (isolevel - this.corners[4].isovalue) / (this.corners[5].isovalue - this.corners[4].isovalue);
-        this.edges[4].updatePosition(this.corners[4].pos.clone().lerp(this.corners[5].pos, this.edges[4].isovalue));
-      }
-      if ((edges & 32) > 0) {
-        this.edges[5].isovalue = (isolevel - this.corners[5].isovalue) / (this.corners[6].isovalue - this.corners[5].isovalue);
-        this.edges[5].updatePosition(this.corners[5].pos.clone().lerp(this.corners[6].pos, this.edges[5].isovalue));
-      }
-      if ((edges & 64) > 0) {
-        this.edges[6].isovalue = (isolevel - this.corners[6].isovalue) / (this.corners[7].isovalue - this.corners[7].isovalue);
-        this.edges[6].updatePosition(this.corners[6].pos.clone().lerp(this.corners[7].pos, this.edges[6].isovalue));
-      }
-      if ((edges & 128) > 0) {
-        this.edges[7].isovalue = (isolevel - this.corners[7].isovalue) / (this.corners[4].isovalue - this.corners[7].isovalue);
-        this.edges[7].updatePosition(this.corners[7].pos.clone().lerp(this.corners[4].pos, this.edges[7].isovalue));
-      }
-      if ((edges & 256) > 0) {
-        this.edges[9].isovalue = (isolevel - this.corners[4].isovalue) / (this.corners[0].isovalue - this.corners[4].isovalue);
-        this.edges[8].updatePosition(this.corners[4].pos.clone().lerp(this.corners[0].pos, this.edges[8].isovalue));
-      }
-      if ((edges & 512) > 0) {
-        this.edges[9].isovalue = (isolevel - this.corners[5].isovalue) / (this.corners[1].isovalue - this.corners[5].isovalue);
-        this.edges[9].updatePosition(this.corners[5].pos.clone().lerp(this.corners[1].pos, this.edges[9].isovalue));
-      }
-      if ((edges & 1024) > 0) {
-        this.edges[10].isovalue = (isolevel - this.corners[6].isovalue) / (this.corners[2].isovalue - this.corners[6].isovalue);
-        this.edges[10].updatePosition(this.corners[6].pos.clone().lerp(this.corners[2].pos, this.edges[10].isovalue));
-      }
-      if ((edges & 2048) > 0) {
-        this.edges[11].isovalue = (isolevel - this.corners[7].isovalue) / (this.corners[3].isovalue - this.corners[7].isovalue);
-        this.edges[11].updatePosition(this.corners[7].pos.clone().lerp(this.corners[3].pos, this.edges[11].isovalue));
-      }
-    }
+
+    };
 
     this.init();
   }
@@ -448,7 +474,7 @@ var Grid = function(config, framework) {
           this.cells[c].center.isovalue += this.balls[b].radius2 / this.cells[c].center.pos.distanceToSquared(this.balls[b].pos);
           if (this.cells[c].center.isovalue > 1) {
             this.cells[c].mesh.visible = true;
-            this.cells[c].center.show();
+            //this.cells[c].center.show();
           }
         }
 
@@ -470,11 +496,11 @@ var Grid = function(config, framework) {
           for (var b = 0; b < this.balls.length; b++) {
             // Accumulate f for each metaball relative to this cell
             this.cells[c].corners[cp].isovalue += this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos);
-            if (cp === 3) {
-              this.cells[c].corners[3].isovalue = 1;
-            } else {
-              this.cells[c].corners[cp].isovalue = 0;
-            }
+            // if (cp === 3) {
+            //   this.cells[c].corners[3].isovalue = 1.1;
+            // } else {
+            //   this.cells[c].corners[cp].isovalue = 0;
+            // }
             if (this.cells[c].corners[cp].isovalue > 1) {
               this.cells[c].corners[cp].show();
             }
