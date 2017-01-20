@@ -3,8 +3,12 @@ module.exports = {
     directory: "website",
     repo: "git@github.com:CIS700-Procedural-Graphics/cis700-procedural-graphics.github.io.git"
   },
-  hw01_base: {
+  project1_base: {
     directory: "hw/noise/base",
     repo: "git@github.com:CIS700-Procedural-Graphics/Project1-Noise.git",
+  },
+  project2_base: {
+    directory: "hw/wing/base",
+    repo: "git@github.com:CIS700-Procedural-Graphics/Project2-Distribution.git"
   }
 }
