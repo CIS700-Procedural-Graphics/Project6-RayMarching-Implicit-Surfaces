@@ -25,7 +25,10 @@ function init(callback, update) {
   window.addEventListener('load', function() {
 
     var scene = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+    // var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    var camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, 0.1, 1000);
     var renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -34,10 +37,14 @@ function init(callback, update) {
     var controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.enableZoom = true;
-    controls.target.set(0, 0, 0);
+    controls.target.set(0, 20, 0);
     controls.rotateSpeed = 0.3;
     controls.zoomSpeed = 1.0;
     controls.panSpeed = 2.0;
+
+    camera.position.set(0, 20, 100);
+    camera.zoom = 10;
+    camera.updateProjectionMatrix();
 
     document.body.appendChild(renderer.domElement);
 
