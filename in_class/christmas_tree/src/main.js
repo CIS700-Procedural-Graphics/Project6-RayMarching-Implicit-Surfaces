@@ -2,7 +2,7 @@
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
 
-import {cosineTaper} from './distribution'
+import {cosineTaper, sawtooth, triangle, step} from './distribution'
 
 // called after the scene loads
 function onLoad(framework) {
@@ -39,7 +39,7 @@ function onLoad(framework) {
 
   var settings = {
     treeHeight: 50,
-    leafHeight: 0.25
+    leafHeight: 0.1
   }
 
   var tree_items = [];
@@ -52,7 +52,7 @@ function onLoad(framework) {
 
     for (var i = 0; i < settings.treeHeight; i += settings.leafHeight) {
       var mesh = new THREE.Mesh(cylinder, material);
-      cosineTaper(mesh, {
+      step(mesh, {
         min: 0,
         max: settings.treeHeight,
         pos: i,
