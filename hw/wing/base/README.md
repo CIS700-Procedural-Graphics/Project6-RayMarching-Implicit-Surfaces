@@ -1,8 +1,10 @@
-# [HW2: Distribution](https://github.com/CIS700-Procedural-Graphics/HW2-Distribution)
+# [HW2: Distribution](https://github.com/CIS700-Procedural-Graphics/Project2-Toolbox-Functions)
 
 ## Overview
 
 The objective of this assignment is to procedurally model and animate a bird wing. Let's get creative!
+
+Start by cloning [this repository](https://github.com/CIS700-Procedural-Graphics/Project2-Toolbox-Functions)
 
 ## Modeling
 
