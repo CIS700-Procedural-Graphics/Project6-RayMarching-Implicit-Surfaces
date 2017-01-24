@@ -35,8 +35,15 @@ Using Dat.GUI and the examples provided in the reference code, allow the user to
 3. Feather size
 4. Feather color
 5. Feather orientation
-6. Wind intensity and direction
-7. Flapping speed
+6. Flapping speed
+7. Flapping motion
+
+## For the Overachievers
+
+Suggestions:
+- Make a pretty iridescent or otherwise feather appropriate shader.
+- Base your feather animation on some manner of simulated wind.
+- Otherwise, going the extra mile for this assignment is really in the polish!
 
 ## Submission
 
