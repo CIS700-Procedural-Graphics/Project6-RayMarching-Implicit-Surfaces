@@ -1,4 +1,60 @@
-# [HW1: Noise](https://github.com/CIS700-Procedural-Graphics/HW1-Noise)
+# [HW2: Distribution](https://github.com/CIS700-Procedural-Graphics/HW2-Distribution)
+
+## Overview
+
+The objective of this assignment is to procedurally model and animate a bird wing. Let's get creative!
+
+## Modeling
+
+##### Reference images
+
+Search for three or more images of a bird wing (or any flying creature, really) in order to provide yourself reference material, as you're going to base your modeling and animation from these images. For the more artistic minds, feel free to sketch your own concept.
+
+##### Make wing curve
+
+Begin with a 3D curve for your basic wing shape. Three.js provides classes to create many different types of curves, so you may use whatever type of curve you prefer.
+
+##### Distribute feathers
+
+We have provided a simple feather model from which to begin. You are not required to use this model if you have others that you prefer. From this base, you must duplicate the feather to model a complete wing, and your wing should consist of at least thirty feathers. Distribute points along the curve you created previously; you will append the feather primitives to the curve at these points. Make sure that you modify the size, orientation, and color of your feathers depending on their location on the wing. 
+
+Feel free to diversify your wings by using multiple base feather models.
+
+## Animation
+
+Add a wind force to your scene, and parameterize its direction and speed. You will use this wind force to animate the feathers of your wing by vibrating them slightly. Using Dat.GUI, allow the user to modify these wind parameters. Please note that we don't care about your feather motion being physically accurate, as long as it looks nice.
+
+Additionally, animate the control points of your wing curve to make the wing flap, and allow the user to control the speed of the wing flapping.
+
+## Interactivity
+
+Using Dat.GUI and the examples provided in the reference code, allow the user to adjust the following controls:
+
+1. The curvature of the wing's basic shape
+2. Feather distribution
+3. Feather size
+4. Feather color
+5. Feather orientation
+6. Flapping speed
+7. Flapping motion
+
+## For the Overachievers
+
+Suggestions:
+- Make a pretty iridescent or otherwise feather appropriate shader.
+- Otherwise, going the extra mile for this assignment is really in the polish!
+
+## Submission
+
+- Create a folder called `references` to include your reference images.
+
+- Update `README.md` to contain a solid description of your project
+
+- Publish your project to gh-pages. `npm run deploy`. It should now be visible at http://username.github.io/repo-name
+
+- Create a [pull request](https://help.github.com/articles/creating-a-pull-request/) to this repository, and in the comment, include a link to your published project.
+
+- Submit the link to your pull request on Canvas.
 
 ## Getting Started
 
@@ -22,38 +78,3 @@ All of the JavaScript code is living inside the `src` directory. The main file t
 
 ## Publishing Your Code
 We highly suggest that you put your code on GitHub. One of the reasons we chose to make this course using JavaScript is that the Web is highly accessible and making your awesome work public and visible can be a huge benefit when you're looking to score a job or internship. To aid you in this process, running `npm run deploy` will automatically build your project and push it to `gh-pages` where it will be visible at `username.github.io/repo-name`.
-
-## What is Actually Happening?
-You can skip this part if you really want, but I highly suggest you read it.
-
-### npm install
-`npm install` will install all dependencies into a folder called `node_modules`. That's about it.
-
-### package.json
-
-This is the important file that `npm` looks at. In it, you can see the commands it's using for the `start`, `build`, and `deploy` scripts mentioned above. You can also see all of the dependencies the project requires. I will briefly go through what each of these is.
- - dat-gui: Gives us a nice and simple GUI for modifying variables in our program
- 
- - gl-matrix: Useful library for linear algebra, much like glm
-
- - stats-js: Gives us a nice graph for timing things. We use it to report how long it takes to render each frame
-
- - three: Three.js is the main library we're using to draw stuff
-
- - three-orbit-controls: Handles mouse / touchscreen camera controls
-
- - babel-core, babel-loader, babel-preset-es2015: JavaScript is a a really fast moving language. It is constantly, constantly changing. Unfortunately, web browsers don't keep up nearly as quickly. Babel does the job of converting your code to a form that current browsers support. This allows us to use newer JavaScript features such as classes and imports without worrying about compatibility.
-
- - gh-pages-deploy: This is the library that automates publishing your code to Github
-
- - webpack: Webpack serves the role of packaging your project into a single file. Browsers don't actually support "importing" from other files, so without Webpack, to access data and functions in other files we would need to globally define EVERYTHING. This is an extremely bad idea. Webpack lets us use imports and develop code in separate files. Running `npm build` or `npm start` is what bundles all of your code together.
-
-- webpack-dev-server: This is an extremely useful tool for development. It essentially creates a file watcher and rebuilds your project whenever you make changes. It also injects code into your page that gets notified when these changes occur so it can automatically refresh your page.
-
- - webpack-glsl-loader: Webpack does much more than just JavaScript. We can use it to load glsl, css, images, etc. For whatever you want to import, somebody has probably made a webpack loader for it.
-
-### webpack.config.js
-
-This is the configuration file in webpack. The most important part is `entry` and `output`. These define the input and output for webpack. It will start from `entry`, explore all dependencies, and package them all into `output`. Here, the `output` is `bundle.js`. If you look in `index.html`, you can see that the page is loading `bundle.js`, not `main.js`.
-
-The other sections are just configuration settings for `webpack-dev-server` and setup for loading different types of files.
