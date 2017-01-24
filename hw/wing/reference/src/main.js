@@ -1,6 +1,4 @@
 
-// Skybox texture from: https://github.com/mrdoob/three.js/tree/master/examples/textures/cube/skybox
-
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
 
@@ -12,38 +10,82 @@ function onLoad(framework) {
     var gui = framework.gui;
     var stats = framework.stats;
 
-    // Basic Lambert white
-    var lambertWhite = new THREE.MeshLambertMaterial({ color: 0xaaaaaa, side: THREE.DoubleSide });
+    // LOOK: the line below is synyatic sugar for the code above. Optional, but I sort of recommend it.
+    // var {scene, camera, renderer, gui, stats} = framework;
 
-    // Set light
+    // initialize a simple box and material
+    var box = new THREE.BoxGeometry(.3, .6, .05);
+    var lambertWhite = new THREE.MeshLambertMaterial({ color: 0xaaaaaa, side: THREE.DoubleSide });
+    // var lambertCube = new THREE.Mesh(box, lambertWhite);
     var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
     directionalLight.color.setHSL(0.1, 1, 0.95);
     directionalLight.position.set(1, 3, 2);
     directionalLight.position.multiplyScalar(10);
 
-    // set skybox
-    var loader = new THREE.CubeTextureLoader();
-    var urlPrefix = '/images/skymap/';
-
-    var skymap = new THREE.CubeTextureLoader().load([
-        urlPrefix + 'px.jpg', urlPrefix + 'nx.jpg',
-        urlPrefix + 'py.jpg', urlPrefix + 'ny.jpg',
-        urlPrefix + 'pz.jpg', urlPrefix + 'nz.jpg'
+    var path = new THREE.CatmullRomCurve3( [
+        new THREE.Vector3( 1, 1, 0 ),
+        new THREE.Vector3( 0, 1.1, 0 ),
+        new THREE.Vector3( -1, 1, 0 )
     ] );
+    // var extrudePath = new THREE.Curves.FigureEightPolynomialKnot();
+    var segments = 100;
+    var closed = false;
+    var radiusSegments = 10;
+    var tube = new THREE.TubeBufferGeometry(path, segments, 0.1, radiusSegments, closed);
+    var tubeMesh = new THREE.Mesh(tube, lambertWhite);
+    // scene.add(tubeMesh);
 
-    scene.background = skymap;
+    var loader = new THREE.OBJLoader();
+    loader.load('res/primary.obj', function ( obj ) {
+            var featherGeo = obj.children[0].geometry;
 
-    // load a simple obj mesh
-    var objLoader = new THREE.OBJLoader();
-    objLoader.load('/geo/feather.obj', function(obj) {
+            var numSegments = 15;
+            for(var i = 0; i < numSegments; i++) {
+                var t = (i * i) / ((numSegments - 1) * (numSegments - 1));
+                var point = path.getPointAt(t);
+                var tangent = path.getTangentAt(t);
 
-        // LOOK: This function runs after the obj has finished loading
-        var featherGeo = obj.children[0].geometry;
+                var feather = new THREE.Mesh(featherGeo, lambertWhite);
+                feather.position.set(point.x, point.y, point.z);
+                var dir = new THREE.Vector3(point.x + tangent.x, point.y + tangent.y, point.z + tangent.z);
+                feather.lookAt(dir);
+                feather.rotateX(-90 * t * 0.0174533);
+                feather.rotateY((-160 - 10 * t) * 0.0174533);
+                feather.rotateZ((-85 - 5  * t) * 0.0174533);
+                scene.add(feather);
+            }
 
-        var featherMesh = new THREE.Mesh(featherGeo, lambertWhite);
-        featherMesh.name = "feather";
-        scene.add(featherMesh);
-    });
+            for(var i = 0; i < numSegments/1.2; i++) {
+                var t = (i) / ((numSegments - 1));
+                var point = path.getPointAt(t);
+                var tangent = path.getTangentAt(t);
+
+                var feather = new THREE.Mesh(featherGeo, lambertWhite);
+                feather.position.set(point.x, point.y, point.z);
+                var dir = new THREE.Vector3(point.x + tangent.x, point.y + tangent.y, point.z + tangent.z);
+                feather.scale.x = 0.4 + 0.1 * (1-t);
+                feather.lookAt(dir);
+                feather.rotateX(-110 * t * 0.0174533);
+                feather.rotateY((-160 - 15 * t) * 0.0174533);
+                feather.rotateZ((-90 - 5  * t) * 0.0174533);
+                scene.add(feather);
+            }
+            for(var i = 0; i < numSegments/2; i++) {
+                var t = (i) / ((numSegments - 1));
+                var point = path.getPointAt(t);
+                var tangent = path.getTangentAt(t);
+
+                var feather = new THREE.Mesh(featherGeo, lambertWhite);
+                feather.position.set(point.x, point.y, point.z);
+                var dir = new THREE.Vector3(point.x + tangent.x, point.y + tangent.y, point.z + tangent.z);
+                feather.scale.x = 0.1 + 0.1 * (1-t);
+                feather.lookAt(dir);
+                feather.rotateZ((-75 + 20 * t) * 0.0174533);
+                scene.add(feather);
+            }
+        }
+    );
+    
 
     // set camera position
     camera.position.set(0, 1, 5);
@@ -61,12 +103,8 @@ function onLoad(framework) {
 
 // called on frame updates
 function onUpdate(framework) {
-    var feather = framework.scene.getObjectByName("feather");    
-    if (feather !== undefined) {
-        // Simply flap wing
-        var date = new Date();
-        feather.rotateZ(Math.sin(date.getTime() / 100) * 2 * Math.PI / 180);        
-    }
+    // console.log(`the time is ${new Date()}`);
+
 }
 
 // when the scene is done initializing, it will call onLoad, then on frame updates, call onUpdate
