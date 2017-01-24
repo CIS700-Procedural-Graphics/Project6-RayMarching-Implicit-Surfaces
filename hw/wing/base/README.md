@@ -4,7 +4,7 @@
 
 The objective of this assignment is to procedurally model and animate a bird wing. Let's get creative!
 
-Start by cloning [this repository](https://github.com/CIS700-Procedural-Graphics/Project2-Toolbox-Functions)
+Start by forking and then cloning [this repository](https://github.com/CIS700-Procedural-Graphics/Project2-Toolbox-Functions)
 
 ## Modeling
 

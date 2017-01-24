@@ -2,7 +2,7 @@
   "scripts": {
     "start": "webpack-dev-server --hot --inline",
     "build": "webpack",
-    "deploy": "git checkout master && git commit -am 'update' && gh-pages-deploy"
+    "deploy": "rm -rf npm-debug.log && git checkout master && git commit -am 'update' && gh-pages-deploy"
   },
   "gh-pages-deploy": {
     "prep": [
