@@ -1,4 +1,4 @@
-# [HW2: Distribution](https://github.com/CIS700-Procedural-Graphics/Project2-Toolbox-Functions)
+# [Project2: Toolbox Functions](https://github.com/CIS700-Procedural-Graphics/Project2-Toolbox-Functions)
 
 ## Overview
 
