@@ -9,25 +9,26 @@ export default class LSystem{
     this.axiom = axiom;
     this.currentState = axiom;
     this.states = [];
-    this.currentStatePos = new THREE.Vector3(0, 0, 0);
+    this.currentStatePos = new THREE.Vector3(0, -10, 0);
     this.currentStateRot = new THREE.Vector3(0, 0, 0);
     this.iterationCount = 0;
     this.variables = ["F", "X"];
     this.constants = ["-", "+", "[", "]"];
-    this.fRule = "F";
-    this.xRule = "[-FX]+FX";
+    this.fRule = "FF";
+    this.xRule = "F-[[X]+X]+F[+FX]-X";
     this.scene = scene;
     this.angle = 30 * (Math.PI/180);
-    this.iteration_gui;
-    this.state_gui;
-    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 0.5);
-
-    this.red = new THREE.MeshPhongMaterial({ 
-      color: new THREE.Color(1.0, 0.2, 0.1),
+    this.copyCount = 0;
+    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 1.0);
+  
+    this.white = new THREE.MeshPhongMaterial({ 
+      color: new THREE.Color(0.7, 0.7, 0.8),
+      emissive: new THREE.Color(0.95, 0.95, 0.95),
+      emissiveIntensity: 0.5,
       shininess: 50 });
     
-    this.yellow = new THREE.MeshPhongMaterial({ 
-      color: new THREE.Color(0.9, 0.8, 0.1),
+    this.red = new THREE.MeshPhongMaterial({ 
+      color: new THREE.Color(0.9, 0.1, 0),
       shininess: 50 });
 
     this.teal = new THREE.MeshPhongMaterial({ 
@@ -38,14 +39,6 @@ export default class LSystem{
     console.log(this);
   }
 
-  setIterationGui(iteration_gui) {
-    this.iteration_gui = iteration_gui;
-  }
-
-  setStateGui(state_gui) {
-    this.state_gui = state_gui;
-  }
-
   updateAxiom(newVal) {
     this.axiom = newVal;
   }
@@ -53,21 +46,18 @@ export default class LSystem{
   // Where we parse the string and add meshes to the scene
   drawState() {
     var currentMesh;
+    this.clearScene();
     for (var i=0; i < this.currentState.length; i++) {
       var currentLetter = this.currentState[i];
       if (currentLetter === "F") {
         currentMesh = this.drawForward();
         this.scene.add(currentMesh);
-        console.log("forward mesh pos");
-        console.log(currentMesh.position);
         this.currentStatePos = currentMesh.position;
         this.currentStateRot = currentMesh.rotation;
 
       } else if (currentLetter === "-") {
         currentMesh = this.turnLeft();
         this.scene.add(currentMesh);
-        console.log("turn left mesh pos");
-        console.log(currentMesh.position);
         this.currentStatePos = currentMesh.position;
         this.currentStateRot = currentMesh.rotation;
 
@@ -76,6 +66,7 @@ export default class LSystem{
         this.scene.add(currentMesh);
         this.currentStatePos = currentMesh.position;
         this.currentStateRot = currentMesh.rotation;
+
       } else if (currentLetter === "[") {
         this.saveState(currentMesh);
       } else if (currentLetter ==="]") {
@@ -91,29 +82,19 @@ export default class LSystem{
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation( 
       0, this.cylinderSize.z/2, 0));
 
-    var mesh = new THREE.Mesh(geometry, this.red);
-    mesh = this.move(mesh, this.currentStatePos);
+    var mesh = new THREE.Mesh(geometry, this.white);
+    mesh = this.moveMesh(mesh, this.currentStatePos);
 
     mesh.rotateX(this.currentStateRot.x);
     mesh.rotateY(this.currentStateRot.y);
     mesh.rotateZ(this.currentStateRot.z);
 
-    // var forward = new THREE.Vector3(0, this.cylinderSize.z, 0);
-    // // forward.applyEuler(new THREE.Euler(
-    // //   this.currentStateRot.x, 
-    // //   this.currentStateRot.y, 
-    // //   this.currentStateRot.z));
-    // mesh = this.move(mesh, forward);
-
+    // move forward 
     mesh.translateY(this.cylinderSize.z);
-
-    console.log(mesh.rotation);
-    console.log(this.currentStateRot);
-    console.log(mesh.position);
     return mesh;
   }
 
-  move(mesh, trans) {
+  moveMesh(mesh, trans) {
     mesh.translateX(trans.x);
     mesh.translateY(trans.y);
     mesh.translateZ(trans.z);
@@ -127,12 +108,17 @@ export default class LSystem{
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation( 
       0, this.cylinderSize.z/2, 0));
   
-    var mesh = new THREE.Mesh(geometry, this.yellow);
-    mesh = this.move(mesh, this.currentStatePos);
-    mesh.translateY(this.cylinderSize.z);
+    var mesh = new THREE.Mesh(geometry, this.white);
+    mesh = this.moveMesh(mesh, this.currentStatePos);
     mesh.rotateX(this.currentStateRot.x);
     mesh.rotateY(this.currentStateRot.y);
-    mesh.rotateZ(this.currentStateRot.z + this.angle);
+    mesh.rotateZ(this.currentStateRot.z);
+
+    // left and up
+    mesh.translateY(this.cylinderSize.z);
+    mesh.rotateZ(this.angle);
+
+    mesh.rotateX((Math.random() - 0.5)*0.5);
   
     return mesh;
   }
@@ -144,13 +130,17 @@ export default class LSystem{
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation( 
       0, this.cylinderSize.z/2, 0));
 
-    var mesh = new THREE.Mesh(geometry, this.teal);
-    mesh = this.move(mesh, this.currentStatePos);
-    mesh.translateY(this.cylinderSize.z);
+    var mesh = new THREE.Mesh(geometry, this.white);
+    mesh = this.moveMesh(mesh, this.currentStatePos);
     mesh.rotateX(this.currentStateRot.x);
     mesh.rotateY(this.currentStateRot.y);
-    mesh.rotateZ(this.currentStateRot.z-this.angle);
-   
+    mesh.rotateZ(this.currentStateRot.z);
+
+    // right and up
+    mesh.translateY(this.cylinderSize.z);
+    mesh.rotateZ(-this.angle);
+
+    mesh.rotateX((Math.random() - 0.5)*0.5);
     return mesh;
   }
 
@@ -173,14 +163,36 @@ export default class LSystem{
 
   }
 
+  clearScene() {
+    var meshes = [];
+    for(var object in this.scene.children) {
+      if (this.scene.children[object].type === "Mesh") {
+        meshes.push(this.scene.children[object]);
+      }
+    }
+
+    for (var i in meshes) {
+      this.scene.remove(meshes[i]);
+    }
+  }
+
+  resetScene(){
+    this.iterationCount = 1;
+    this.currentStatePos = new THREE.Vector3(0, -10, 0);
+    this.currentStateRot = new THREE.Vector3(0, 0, 0);
+    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 1.0);
+    this.clearScene();
+    this.axiom = "FX";
+    this.currentState = this.axiom;
+    this.drawState();
+  }
+
   step() {
     var updatedState = "";
-
-    console.log("starting with");
-    console.log(this.currentState);
-
-    this.currentStatePos = new THREE.Vector3(0, 0, 0);
+    this.clearScene();
+    this.currentStatePos = new THREE.Vector3(0, -10, 0);
     this.currentStateRot = new THREE.Vector3(0, 0, 0);
+    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 1.0);
 
     // apply rules 
     for(var i=0; i < this.currentState.length; i++) {
@@ -189,23 +201,16 @@ export default class LSystem{
       if (currentLetter === "F") {
         updatedState += this.fRule;
       } else if (currentLetter === "X") {
-        console.log("beforeX");
-        console.log(this.currentState);
-        console.log(updatedState);
         updatedState += this.xRule;
-        console.log(updatedState);
       } else {
         updatedState += currentLetter;
       }
     }
 
-    console.log(updatedState);
     this.currentState = updatedState;
     this.iterationCount += 1;
 
     this.drawState();
-    this.iteration_gui.updateDisplay();
-    this.state_gui.updateDisplay();
   }
  
   n_more_steps(iteration_cnt){

@@ -23,16 +23,23 @@ function onLoad(framework) {
   var box = new THREE.BoxGeometry(1, 1, 1);
   var lambertWhite = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
   var lambertCube = new THREE.Mesh(box, lambertWhite);
-  var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-  directionalLight.color.setHSL(0.1, 1, 0.95);
-  directionalLight.position.set(1, 3, 2);
-  directionalLight.position.multiplyScalar(10);
-
+  
   // set camera position
-  camera.position.set(0, 2, 3);
-  camera.lookAt(new THREE.Vector3(0,2,-3));
+  camera.position.set(0, 0, 18);
+  camera.lookAt(new THREE.Vector3(0,0,-3));
 
-  scene.add(directionalLight);
+  //lights
+  var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+  hemiLight.color.setHSL( 0.6, 1, 0.6 );
+  hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+  hemiLight.position.set( 0, 500, 0 );
+  scene.add( hemiLight );
+
+  var dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+  dirLight.color.setHSL( 0.1, 1, 0.95 );
+  dirLight.position.set( -1, 1.75, 1 );
+  dirLight.position.multiplyScalar( 50 );
+  scene.add( dirLight );
 
   // edit params and listen to changes like this
   // more information here: https://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
@@ -45,11 +52,8 @@ function onLoad(framework) {
   });
 
   gui.add(lSystem, 'step');
-  var iteration_gui = gui.add(lSystem, 'iterationCount');
-  lSystem.setIterationGui(iteration_gui);
 
-  var state_gui = gui.add(lSystem, 'currentState');
-  lSystem.setStateGui(state_gui);
+  gui.add(lSystem, 'resetScene');
 }
 
 // called on frame updates

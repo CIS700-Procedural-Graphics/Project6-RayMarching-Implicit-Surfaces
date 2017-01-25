@@ -29,16 +29,15 @@ function init(callback, update) {
     var renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0xFFFFFF, 0);
+    renderer.setClearColor(0x020202, 0);
 
     var controls = new OrbitControls(camera, renderer.domElement);
-    // controls.enableDamping = true;
+    controls.enableDamping = true;
     controls.enableZoom = true;
-    // controls.target.set(0, 0, 0);
+    controls.target.set(0, 0, 0);
     controls.rotateSpeed = 0.3;
     controls.zoomSpeed = 1.0;
     controls.panSpeed = 2.0;
-    controls.autoRotate = true;
 
     document.body.appendChild(renderer.domElement);
 
