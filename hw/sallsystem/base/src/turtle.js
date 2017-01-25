@@ -20,8 +20,6 @@ export default class Turtle {
                 ']' : this.restoreState.bind(this),
                 '+' : this.rotateTurtle.bind(this, 30, 0, 0),
                 '-' : this.rotateTurtle.bind(this, -30, 0, 0),
-                '<' : this.randRotateTurtle.bind(this, 0.15, 0.5, 0),
-                '>' : this.randRotateTurtle.bind(this, -0.15, -0.5, 0),
                 'F' : this.makeCylinder.bind(this, 2, 0.1)
             };
         } else {
@@ -54,14 +52,6 @@ export default class Turtle {
                 x * 3.14/180,
                 y * 3.14/180,
                 z * 3.14/180);
-        this.state.dir.applyEuler(e);
-    }
-
-    randRotateTurtle(x, y, z) {
-        var e = new THREE.Euler(
-                x * 3.14/180 * Math.random() * 360,
-				y * 3.14/180 * Math.random() * 360,
-				z * 3.14/180 * Math.random() * 360);
         this.state.dir.applyEuler(e);
     }
 

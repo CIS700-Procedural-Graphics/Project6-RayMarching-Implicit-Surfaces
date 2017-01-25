@@ -1,6 +1,6 @@
 const THREE = require('three')
 
-// The turtle stuff
+// The turtle state. Feel free to add other attributes like color
 var TurtleState = function(pos, dir) {
     return {
         pos: new THREE.Vector3(pos.x, pos.y, pos.z),
@@ -12,16 +12,11 @@ export default class Turtle {
     constructor(scene, grammar) {
         this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));
         this.scene = scene;
-        this.states = [];
 
         if (typeof grammar === "undefined") {
             this.renderGrammar = {
-                '[' : this.saveState.bind(this),
-                ']' : this.restoreState.bind(this),
                 '+' : this.rotateTurtle.bind(this, 30, 0, 0),
                 '-' : this.rotateTurtle.bind(this, -30, 0, 0),
-                '<' : this.randRotateTurtle.bind(this, 0.15, 0.5, 0),
-                '>' : this.randRotateTurtle.bind(this, -0.15, -0.5, 0),
                 'F' : this.makeCylinder.bind(this, 2, 0.1)
             };
         } else {
@@ -31,7 +26,6 @@ export default class Turtle {
 
     clear() {
         this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));        
-        this.states = [];
     }
 
     printState() {
@@ -39,35 +33,17 @@ export default class Turtle {
         console.log(this.state.dir)
     }
 
-    saveState() {
-        this.states.push(new TurtleState(this.state.pos, this.state.dir));
-    }
-
-    restoreState() {
-        var tmp_state = this.states.pop();
-        this.state.pos = tmp_state.pos;
-        this.state.dir = tmp_state.dir;
-    }
-
     rotateTurtle(x, y, z) {
         var e = new THREE.Euler(
                 x * 3.14/180,
-                y * 3.14/180,
-                z * 3.14/180);
-        this.state.dir.applyEuler(e);
-    }
-
-    randRotateTurtle(x, y, z) {
-        var e = new THREE.Euler(
-                x * 3.14/180 * Math.random() * 360,
-				y * 3.14/180 * Math.random() * 360,
-				z * 3.14/180 * Math.random() * 360);
+				y * 3.14/180,
+				z * 3.14/180);
         this.state.dir.applyEuler(e);
     }
 
     moveTurtle(x, y, z) {
-        var new_vec = THREE.Vector3(x, y, z);
-        this.state.pos.add(new_vec);
+	    var new_vec = THREE.Vector3(x, y, z);
+	    this.state.pos.add(new_vec);
     };
 
     moveForward(dist) {
@@ -78,7 +54,6 @@ export default class Turtle {
     // Make a cylinder of given length and width starting at turtle pos
     // Moves turtle pos ahead to end of the new cylinder
     makeCylinder(len, width) {
-
         var geometry = new THREE.CylinderGeometry(width, width, len);
         var material = new THREE.MeshBasicMaterial( {color: 0x00cccc} );
         var cylinder = new THREE.Mesh( geometry, material );
@@ -102,6 +77,7 @@ export default class Turtle {
         this.moveForward(len/2);
     };
     
+    // Call the function that a symbol is binded to. (Binded in the constructor)
     renderSymbol(symbol) {
         var func = this.renderGrammar[symbol]; //THIS DOES NOTHING
         if (func) {
