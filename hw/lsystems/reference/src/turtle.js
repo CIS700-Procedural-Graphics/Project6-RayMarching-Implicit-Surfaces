@@ -101,17 +101,18 @@ export default class Turtle {
         //Scoot the turtle forward by len units
         this.moveForward(len/2);
     };
-    
-    renderSymbol(symbol) {
-        var func = this.renderGrammar[symbol]; //THIS DOES NOTHING
+
+    renderSymbol(symbolNode) {
+        var func = this.renderGrammar[symbolNode.character];
         if (func) {
             func();
         }
     };
 
-    renderSymbols(lsystemString) {
-        for(var i = 0; i < lsystemString.length; i++) {
-            this.renderSymbol(lsystemString[i]);
+    renderSymbols(linkedList) {
+        var currentNode;
+        for(currentNode = linkedList.head; currentNode != null; currentNode = currentNode.next) {
+            this.renderSymbol(currentNode);
         }
-    };
+    }
 }
