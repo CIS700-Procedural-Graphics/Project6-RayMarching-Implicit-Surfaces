@@ -1,28 +1,32 @@
 const THREE = require('three')
 
 // The turtle stuff
-var TurtleState = function(pos, dir) {
+var TurtleState = function(pos, scale) {
     return {
         pos: new THREE.Vector3(pos.x, pos.y, pos.z),
-        dir: new THREE.Vector3(dir.x, dir.y, dir.z)
+        scale: new THREE.Vector3(scale.x, scale.y, scale.z),
+        currentNode: null,
+        splitAxis: [],
+        addingToActiveSet: false,
+        activeSet: []
     }
 }
   
 export default class Turtle {
     constructor(scene, grammar) {
-        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));
+        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(1,1,1));
         this.scene = scene;
         this.states = [];
+        this.currentNode = null;
 
         if (typeof grammar === "undefined") {
             this.renderGrammar = {
                 '[' : this.saveState.bind(this),
                 ']' : this.restoreState.bind(this),
-                '+' : this.rotateTurtle.bind(this, 25, 0, 0),
-                '-' : this.rotateTurtle.bind(this, -25, 0, 0),
-                '<' : this.randRotateTurtle.bind(this, 0.15, 0.5, 0),
-                '>' : this.randRotateTurtle.bind(this, -0.15, -0.5, 0),
-                'F' : this.makeCylinder.bind(this, 2, 0.1)
+                'S' : this.subdivide.bind(this),
+                '{' : this.beginActiveSet.bind(this),
+                '}' : this.endActiveSet.bind(this),
+                'C' : this.addToActiveSet.bind(this, 'C')
             };
         } else {
             this.renderGrammar = grammar;
@@ -30,51 +34,74 @@ export default class Turtle {
     }
 
     clear() {
-        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));        
+        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(1,1,1));        
         this.states = [];
     }
 
     printState() {
         console.log(this.state.pos)
-        console.log(this.state.dir)
+        console.log(this.state.scale)
     }
 
     saveState() {
-        this.states.push(new TurtleState(this.state.pos, this.state.dir));
+        this.states.push(new TurtleState(this.state.pos, this.state.scale));
     }
 
     restoreState() {
         var tmp_state = this.states.pop();
         this.state.pos = tmp_state.pos;
-        this.state.dir = tmp_state.dir;
+        this.state.scale = tmp_state.scale;
     }
 
-    rotateTurtle(x, y, z) {
-        var e = new THREE.Euler(
-                x * 3.14/180,
-                y * 3.14/180,
-                z * 3.14/180);
-        this.state.dir.applyEuler(e);
+    beginActiveSet() {
+        console.log('beginActiveSet');
+        this.state.addingToActiveSet = true;
     }
 
-    randRotateTurtle(x, y, z) {
-        var e = new THREE.Euler(
-                x * 3.14/180 * Math.random() * 360,
-				y * 3.14/180 * Math.random() * 360,
-				z * 3.14/180 * Math.random() * 360);
-        this.state.dir.applyEuler(e);
+    makeCube(position, scale) {
+        console.log('makeCube');
+        var geometry = new THREE.BoxGeometry(1, 1, 1);
+        var material = new THREE.MeshLambertMaterial( {color: 0x00cccc} );
+        var cube = new THREE.Mesh( geometry, material );
+        this.scene.add( cube );
+
+        // Scale the cube accordingly
+        cube.position.set(position, this.state.pos.y, this.state.pos.z);
+        cube.scale.set(scale, this.state.scale.y, this.state.scale.z);
     }
 
-    moveTurtle(x, y, z) {
-        var new_vec = THREE.Vector3(x, y, z);
-        this.state.pos.add(new_vec);
-    };
+    endActiveSet() {
+        console.log('endActiveSet');
+        this.state.addingToActiveSet = false;
 
-    moveForward(dist) {
-        var newVec = this.state.dir.multiplyScalar(dist);
-        this.state.pos.add(newVec);
-    };
-    
+        // Loop through active set and render shapes here
+        var numShapes = this.state.activeSet.length;
+        var boundX = this.state.scale.x;
+        var splitScale = boundX / numShapes;
+        var splitFirstOffset = this.state.pos.x - this.state.scale.x / 2.0;
+        for (var i = 0; i < numShapes; i++) {
+            var position = splitFirstOffset + splitScale / 2.0 + splitScale * i;
+
+            this.makeCube(position, splitScale * 0.7);
+        }
+    }
+
+    addToActiveSet(shape) {
+        console.log('addToActiveSet');
+        if (this.state.addingToActiveSet) {
+            this.state.activeSet.push(shape);            
+        }
+    }
+
+
+    subdivide() {
+        console.log('subdivide');
+        // Divide along X
+        this.state.splitAxis.push('X');
+        this.state.scale.set(this.state.scale.x / 2.0, this.state.scale.y / 2.0, this.state.scale.z / 2.0);
+    }
+
+
     // Make a cylinder of given length and width starting at turtle pos
     // Moves turtle pos ahead to end of the new cylinder
     makeCylinder(len, width) {
@@ -103,6 +130,7 @@ export default class Turtle {
     };
 
     renderSymbol(symbolNode) {
+        this.currentNode = symbolNode;
         var symbol = symbolNode.character;
         var func = this.renderGrammar[symbol];
         if (func) {

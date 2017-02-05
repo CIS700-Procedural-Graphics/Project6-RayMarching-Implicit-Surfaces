@@ -62,10 +62,12 @@ export function StringToLinkedList(input_string) {
 	// "pointer" to current node?
 	var current_node = root_node;
 
-	for (var i = 1; i < input_string.length; ++i) {
+	var tokenLen = 1;
+	for (var i = 1; i < input_string.length; i += tokenLen) {
 		var new_node = new Node(input_string[i]);
 		symmetricallyLink(current_node, new_node);
 		current_node = new_node;
+		tokenLen = 1;
 	}
 	result.head = root_node;
 	result.tail = current_node;
@@ -111,15 +113,13 @@ function ReplaceNode(linkedList, node, replacementString)
 export default function Lsystem(axiom, grammar, iterations)
 {
 	// default LSystem
-	this.axiom = "FX";
+	this.axiom = "C";
 	this.grammar = {};
-	this.grammar['X'] = [
-		new Rule(1.0, 'F-[[X]+FX]+F[+FX]-X')
+	this.grammar['C'] = [
+		new Rule(1.0, 'S{CC}')
 	];
-	this.grammar['F'] = [
-		new Rule(1.0, 'FF')
-	];
-	this.iterations = 0; 
+
+	this.iterations = 1; 
 	
 	// Setup axiom
 	if (typeof axiom !== "undefined") {
