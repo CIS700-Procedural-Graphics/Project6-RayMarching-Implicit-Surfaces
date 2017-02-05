@@ -56,7 +56,7 @@ function onLoad(framework) {
 
 function clearScene(turtle) {
   var obj;
-  for( var i = turtle.scene.children.length - 1; i > 3; i--) {
+  for( var i = turtle.scene.children.length - 1; i > 1; i--) {
       obj = turtle.scene.children[i];
       turtle.scene.remove(obj);
   }

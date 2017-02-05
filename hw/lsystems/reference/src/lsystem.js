@@ -114,7 +114,10 @@ export default function Lsystem(axiom, grammar, iterations)
 	this.axiom = "FX";
 	this.grammar = {};
 	this.grammar['X'] = [
-		new Rule(1.0, '[-FX][+FX]')
+		new Rule(1.0, 'F-[[X]+FX]+F[+FX]-X')
+	];
+	this.grammar['F'] = [
+		new Rule(1.0, 'FF')
 	];
 	this.iterations = 0; 
 	
@@ -155,6 +158,6 @@ export default function Lsystem(axiom, grammar, iterations)
 			}
 		}
 
-		return LinkedListToString(currStringLL);
+		return currStringLL;
 	}
 }

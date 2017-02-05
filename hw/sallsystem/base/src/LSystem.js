@@ -19,7 +19,7 @@ export default class LSystem{
     this.scene = scene;
     this.angle = 30 * (Math.PI/180);
     this.copyCount = 0;
-    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 1.0);
+    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 0.8);
   
     this.white = new THREE.MeshPhongMaterial({ 
       color: new THREE.Color(0.7, 0.7, 0.8),
@@ -180,7 +180,7 @@ export default class LSystem{
     this.iterationCount = 1;
     this.currentStatePos = new THREE.Vector3(0, -10, 0);
     this.currentStateRot = new THREE.Vector3(0, 0, 0);
-    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 1.0);
+    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 0.8);
     this.clearScene();
     this.axiom = "FX";
     this.currentState = this.axiom;
@@ -192,7 +192,7 @@ export default class LSystem{
     this.clearScene();
     this.currentStatePos = new THREE.Vector3(0, -10, 0);
     this.currentStateRot = new THREE.Vector3(0, 0, 0);
-    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 1.0);
+    this.cylinderSize = new THREE.Vector3(0.1, 0.1, 0.8);
 
     // apply rules 
     for(var i=0; i < this.currentState.length; i++) {

@@ -18,8 +18,8 @@ export default class Turtle {
             this.renderGrammar = {
                 '[' : this.saveState.bind(this),
                 ']' : this.restoreState.bind(this),
-                '+' : this.rotateTurtle.bind(this, 30, 0, 0),
-                '-' : this.rotateTurtle.bind(this, -30, 0, 0),
+                '+' : this.rotateTurtle.bind(this, 25, 0, 0),
+                '-' : this.rotateTurtle.bind(this, -25, 0, 0),
                 '<' : this.randRotateTurtle.bind(this, 0.15, 0.5, 0),
                 '>' : this.randRotateTurtle.bind(this, -0.15, -0.5, 0),
                 'F' : this.makeCylinder.bind(this, 2, 0.1)
@@ -103,7 +103,8 @@ export default class Turtle {
     };
 
     renderSymbol(symbolNode) {
-        var func = this.renderGrammar[symbolNode.character];
+        var symbol = symbolNode.character;
+        var func = this.renderGrammar[symbol];
         if (func) {
             func();
         }

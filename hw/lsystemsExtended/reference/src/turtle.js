@@ -1,18 +1,25 @@
 const THREE = require('three')
 
 // The turtle stuff
-var TurtleState = function(pos, dir) {
+var TurtleState = function(pos, dir, scale) {
     return {
         pos: new THREE.Vector3(pos.x, pos.y, pos.z),
-        dir: new THREE.Vector3(dir.x, dir.y, dir.z)
+        dir: new THREE.Vector3(dir.x, dir.y, dir.z),
+        scale: new THREE.Vector3(scale.x, scale.y, scale.z),
+        activeShapes: []
     }
 }
   
 export default class Turtle {
     constructor(scene, grammar) {
-        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));
+        this.state = new TurtleState(new THREE.Vector3(0,0,0), 
+            new THREE.Vector3(0,1,0),
+            new THREE.Vector3(1,1,1));
         this.scene = scene;
+        this.currentNode = null;
         this.states = [];
+        this.cubeCount = 0;
+        this.subdivision = 0;
 
         if (typeof grammar === "undefined") {
             this.renderGrammar = {
@@ -22,7 +29,8 @@ export default class Turtle {
                 '-' : this.rotateTurtle.bind(this, -25, 0, 0),
                 '<' : this.randRotateTurtle.bind(this, 0.15, 0.5, 0),
                 '>' : this.randRotateTurtle.bind(this, -0.15, -0.5, 0),
-                'F' : this.makeCylinder.bind(this, 2, 0.1)
+                'C' : this.makeCube.bind(this, 2, 0.1),
+                'S' : this.subdivide.bind(this)
             };
         } else {
             this.renderGrammar = grammar;
@@ -30,7 +38,10 @@ export default class Turtle {
     }
 
     clear() {
-        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));        
+        this.state = new TurtleState(
+            new THREE.Vector3(0,0,0), 
+            new THREE.Vector3(0,1,0),
+            new THREE.Vector3(1,1,1));        
         this.states = [];
     }
 
@@ -40,13 +51,19 @@ export default class Turtle {
     }
 
     saveState() {
-        this.states.push(new TurtleState(this.state.pos, this.state.dir));
+        this.states.push(new TurtleState(
+            this.state.pos, 
+            this.state.dir, 
+            this.state.scale));
     }
 
     restoreState() {
-        var tmp_state = this.states.pop();
-        this.state.pos = tmp_state.pos;
-        this.state.dir = tmp_state.dir;
+        if (this.states.length > 0) {
+             var tmp_state = this.states.pop();
+            this.state.pos = tmp_state.pos;
+            this.state.dir = tmp_state.dir;
+            this.state.scale = tmp_state.scale;
+        }
     }
 
     rotateTurtle(x, y, z) {
@@ -102,7 +119,54 @@ export default class Turtle {
         this.moveForward(len/2);
     };
 
+    makeCube(side) {
+        var cubeState = this.state;
+
+        if (this.states.length > 0) {
+            cubeState = this.states.pop();
+            this.state = cubeState;
+        }
+
+        var geometry = new THREE.BoxGeometry(
+            cubeState.scale.x, 
+            cubeState.scale.y,
+            cubeState.scale.z);
+        var material = new THREE.MeshPhongMaterial( {
+            color: 0xbbbbbb,
+            emissive: 0x008888} );
+        var cube = new THREE.Mesh( geometry, material );
+
+        cube.position.set(cubeState.pos.x, cubeState.pos.y, cubeState.pos.z)
+        this.scene.add( cube );
+        this.cubeCount += 1;
+    };
+
+    subdivide() {
+        var temp_state = this.state;
+        var new_neg_pos = new THREE.Vector3(
+            -temp_state.scale.x/2.0 + temp_state.pos.x,
+            temp_state.pos.y + 1.0,
+            temp_state.pos.z); 
+
+        var new_pos_pos = new THREE.Vector3(
+            temp_state.scale.x/2.0 + temp_state.pos.x,
+            temp_state.pos.y + 1.0,
+            temp_state.pos.z); 
+
+        var new_scale = new THREE.Vector3(
+            temp_state.scale.x * 0.4,
+            temp_state.scale.y,
+            temp_state.scale.z); 
+
+        this.state.scale = new_scale;
+
+        this.states.push(new TurtleState(new_neg_pos, this.state.dir, new_scale));
+        this.states.push(new TurtleState(new_pos_pos, this.state.dir, new_scale));
+        this.subdivision += 1;
+    };
+
     renderSymbol(symbolNode) {
+        this.currentNode = symbolNode;
         var symbol = symbolNode.character;
         var func = this.renderGrammar[symbol];
         if (func) {

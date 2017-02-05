@@ -1,14 +1,20 @@
+const THREE = require('three')
+
 export function Rule(prob, str)
 {
 	this.probability = prob; // The probability that this Rule will be used when replacing a character in the grammar string
 	this.successorString = str; // The string that will replace the char that maps to this Rule
 }
 
-function Node(symbol) // Node for a linked list of grammar symbols
+function Node(symbol, iteration) // Node for a linked list of grammar symbols
 {
 	this.next = null;
 	this.prev = null;
 	this.character = symbol;
+	this.predecessor = null;
+	this.iteration = iteration;
+	this.pos = new THREE.Vector3(0, 0, 0);
+	this.scale = new THREE.Vector3(1, 1, 1);
 }
 
 function LinkedList()
@@ -26,8 +32,8 @@ function symmetricallyLink(node1, node2)
 // Takes in the node we want to replace
 // and randomly chooses and applies a rule to it
 // Returns the node from which our expander should continue expanding
-//            						Node   Map of rules
-function ApplyRandomRule(linkedList, node, grammar)
+//            						Node   Iteration Map of rules
+function ApplyRandomRule(linkedList, node, iteration, grammar)
 {
 	var symbol = node.character;
 	var rulesArray = grammar[symbol];
@@ -111,13 +117,10 @@ function ReplaceNode(linkedList, node, replacementString)
 export default function Lsystem(axiom, grammar, iterations)
 {
 	// default LSystem
-	this.axiom = "FX";
+	this.axiom = "C";
 	this.grammar = {};
-	this.grammar['X'] = [
-		new Rule(1.0, 'F-[[X]+FX]+F[+FX]-X')
-	];
-	this.grammar['F'] = [
-		new Rule(1.0, 'FF')
+	this.grammar['C'] = [
+		new Rule(1.0, 'SCC')
 	];
 	this.iterations = 0; 
 	
@@ -154,7 +157,7 @@ export default function Lsystem(axiom, grammar, iterations)
 		{
 			for(var currNode = currStringLL.head; currNode != null; currNode = currNode.next)
 			{
-				ApplyRandomRule(currStringLL, currNode, this.grammar);
+				ApplyRandomRule(currStringLL, currNode, i, this.grammar);
 			}
 		}
 

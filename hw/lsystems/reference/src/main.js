@@ -30,20 +30,11 @@ function onLoad(framework) {
   directionalLight.position.multiplyScalar(10);
 
   // set camera position
-  camera.position.set(1, 1, 10);
+  camera.position.set(10, 10, 1);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   //scene.add(lambertCube);
   scene.add(directionalLight);
-    
-    var grammar = {};
-    grammar['X'] = [
-         new Rule(0.4, "[+FX][-FX]"),
-         new Rule(0.3, "[+F][-FX]"),  
-         new Rule(0.3, "[+FX][-F]")  
-	]; 
-
-  
   var lsys = new Lsystem();
   turtle = new Turtle(scene);
   doLsystem(lsys, lsys.iterations, turtle);
@@ -74,6 +65,7 @@ function clearScene(turtle) {
 function doLsystem(lsystem, iterations, turtle) {
     // lsystem testing
     var result = lsystem.DoIterations(iterations);
+    console.log(LinkedListToString(result));
     turtle.clear();
     turtle = new Turtle(turtle.scene);
     turtle.renderSymbols(result);
