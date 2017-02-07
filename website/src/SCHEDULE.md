@@ -9,14 +9,18 @@ All office hours will occur in the SIG lab. On Fridays, please feel free to join
 
 # Schedule
 
-### 1/17/2017 - Introduction & Noise
+### 2/7/2017 - Shape Grammar
 
 **Lecture Slides:**
-- [Introduction](/files/intro_1_17_17.pdf)
-- [Noise](/files/noise_1_17_17.pdf)
+- [Shape Grammar](/files/shape_grammar_2_7_17.pdf)
 
-**Resources:**
-- [Javascript Basics](/resources/javascript-basics)
+### 1/31/2017 - L-Systems
+
+**Lecture Slides:**
+- [L-Systems](/files/lsystems_1_31_17.pdf)
+
+**In Class:**
+- These images show the 0th and 1st iterations of two L-systems. Submit images of the 5th iteration: [l-system_1](/files/mystery_grammar1.png) [l-system_2](/files/mystery_grammar2.png)
 
 ### 1/23/2017 - Toolbox Functions
 
@@ -26,10 +30,11 @@ All office hours will occur in the SIG lab. On Fridays, please feel free to join
 **In Class:**
 - [Christmas Trees](https://github.com/CIS700-Procedural-Graphics/IC-Distribution)
 
-### 1/31/2017 - L-Systems
+### 1/17/2017 - Introduction & Noise
 
 **Lecture Slides:**
-- [L-Systems](/files/lsystems_1_31_17.pdf)
+- [Introduction](/files/intro_1_17_17.pdf)
+- [Noise](/files/noise_1_17_17.pdf)
 
-**In Class:**
-- These images show the 0th and 1st iterations of two L-systems. Submit images of the 5th iteration: [l-system_1](/files/mystery_grammar1.png) [l-system_2](/files/mystery_grammar2.png)
+**Resources:**
+- [Javascript Basics](/resources/javascript-basics)
