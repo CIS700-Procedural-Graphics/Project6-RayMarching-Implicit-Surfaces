@@ -92,7 +92,7 @@ export default class LSystem{
     // move forward 
     mesh.translateY(this.cylinderSize.z);
     return mesh;
-  }
+  }         
 
   moveMesh(mesh, trans) {
     mesh.translateX(trans.x);
