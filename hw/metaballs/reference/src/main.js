@@ -20,7 +20,7 @@ function onLoad(framework) {
   var {scene, camera, renderer, gui, stats} = framework;
 
   renderer.setClearColor( 0xbfd1e5 );
-
+  scene.add(new THREE.AxisHelper(20));
   setupCamera(camera);
   setupLights(scene);
 
