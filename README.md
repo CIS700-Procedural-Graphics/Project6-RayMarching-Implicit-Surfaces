@@ -2,7 +2,7 @@
 Because I desire not to have to maintain data and information in multiple places, I've set up some infrastructure so that we can keep everything in this Bitbucket but then selectively build and deploy assignments and course website updates to github pages.
 
 ## Publish Targets
-`npm run publish <directory>` will allow us to publish a subdirectory to github. If you need to add or edit any targets, just edit `tools/targets.js`
+Check in `package.json` for the publish targets. We can publish to github by doing things like `npm run publish_project1` or `npm run publish_project2`
 
 ## Assignments
 The idea is that we'll keep base implementations at `hw/hwxx/base` and reference implementations at `hw/hwxx/reference`. I know Adam uses different names. We could use those too, whatever. The `base` folder will be added as a publish target so that changes and updates to our base code can be directly deployed to github.
@@ -31,4 +31,4 @@ As with the assignments for this class, running `npm start` in the root of the `
 
  __Deploying Updates__
 
- Run `npm run build` in the root of the `website directory`. Commit your changes. Run `npm run publish website <comment>` at the root of this repository.
+At the root of this repository, run `npm run publish_website`

@@ -108,50 +108,41 @@ function ReplaceNode(linkedList, node, replacementString)
 	}
 }
 
-
 export default function Lsystem(axiom, grammar, iterations)
 {
+	// default LSystem
+	this.axiom = "FX";
+	this.grammar = {};
+	this.grammar['X'] = [
+		new Rule(1.0, 'F-[[X]+FX]+F[+FX]-X')
+	];
+	this.grammar['F'] = [
+		new Rule(1.0, 'FF')
+	];
+	this.iterations = 0; 
+	
 	// Setup axiom
-	if (!axiom)
-	{
-		this.axiom = "FX";
-	} else {
+	if (typeof axiom !== "undefined") {
 		this.axiom = axiom;
 	}
 
 	// Setup grammar
-	if (typeof grammar === "undefined")
-	{
-		this.grammar = {};
-    	this.grammar['X'] = [
-		 new Rule(1, "[+FX][-FX]") 
-		 ]; 
-	} else {
-		this.grammar = grammar;
+	if (typeof grammar !== "undefined") {
 		this.grammar = Object.assign({}, grammar);
 	}
 	
 	// Setup iterations
-	if (typeof iterations === "undefined")
-	{
-		this.iterations = 3;
-	} else {
+	if (typeof iterations !== "undefined") {
 		this.iterations = iterations;
 	}
 
 	// Update parameters
-	this.Update = function(axiom, grammar) 
+	this.UpdateAxiom = function(axiom) 
 	{
 		// Setup axiom
 		if (typeof axiom !== "undefined")
 		{
-			this.axiom = Object.assign({}, axiom);
-		}
-
-		// Setup grammar
-		if (typeof grammar !== "undefined")
-		{
-			this.grammar = Object.assign({}, grammar);
+			this.axiom = axiom;
 		}
 	}
 
@@ -166,6 +157,7 @@ export default function Lsystem(axiom, grammar, iterations)
 				ApplyRandomRule(currStringLL, currNode, this.grammar);
 			}
 		}
+
 		return currStringLL;
 	}
 }

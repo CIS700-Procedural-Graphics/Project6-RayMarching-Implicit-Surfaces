@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>Perlin noise | Fireball explosion</title>
+        <meta charset="utf-8">
+    </head>
+
+    <body>
+        <div id="container"></div>
+    </body>
+
+    <script src="three.min.js"></script>
+    <script src="dat.gui.min.js"></script>
+
+    <script type="x-shader/x-vertex" id="vertexShader">
+    varying vec2 vUv;
+    uniform float time;
+
+    void main() {
+
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+    }
+    </script>
+
+    <script type="x-shader/x-vertex" id="fragmentShader">
+
+    varying vec2 vUv;
+    uniform float time;
+
+    void main() {
+
+        // colour is RGBA: u, v, 0, 1
+        gl_FragColor = vec4( vec3( vUv, 0. ), 1. );
+
+    }
+    </script>
+
+    <script type="text/javascript" id="mainCode" src="main.js">
+    </script>
+
+</html>

@@ -10,6 +10,8 @@ var test = function(arg1) {
   console.log(this);
 }
 
+var turtle;
+
 // called after the scene loads
 function onLoad(framework) {
   var scene = framework.scene;
@@ -28,56 +30,45 @@ function onLoad(framework) {
   directionalLight.position.multiplyScalar(10);
 
   // set camera position
-  camera.position.set(1, 1, 10);
+  camera.position.set(10, 10, 1);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   //scene.add(lambertCube);
   scene.add(directionalLight);
-    
-    var grammar = {};
-    grammar['X'] = [
-         new Rule(0.4, "[+FX][-FX]"),
-         new Rule(0.3, "[+F][-FX]"),  
-         new Rule(0.3, "[+FX][-F]")  
-	]; 
-
-
-  var lsys = new Lsystem(null, grammar);
-  var turtle = new Turtle(scene);
+  var lsys = new Lsystem();
+  turtle = new Turtle(scene);
   doLsystem(lsys, lsys.iterations, turtle);
 
   // edit params and listen to changes like this
   // more information here: https://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
-   gui.add(camera, 'fov', 0, 180).onFinishChange(function(newVal) {
+  gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
   });
-  gui.add(lsys, 'axiom').onFinishChange(function(newVal) {
-    lsys.Update(newVal, null);
+  gui.add(lsys, 'axiom').onChange(function(newVal) {
+    lsys.UpdateAxiom(newVal);
     doLsystem(lsys, lsys.iterations, turtle);
   });
-   gui.add(lsys, 'iterations', 0, 12).step(1).onFinishChange(function(newVal) {
+   gui.add(lsys, 'iterations', 0, 12).step(1).onChange(function(newVal) {
+    clearScene(turtle);
     doLsystem(lsys, newVal, turtle);
   });
 }
 
+function clearScene(turtle) {
+  var obj;
+  for( var i = turtle.scene.children.length - 1; i > 3; i--) {
+      obj = turtle.scene.children[i];
+      turtle.scene.remove(obj);
+  }
+}
+
 function doLsystem(lsystem, iterations, turtle) {
-    //console.log("Doing lsystem");
-
-    //Clear scene
-    var obj;
-    for( var i = turtle.scene.children.length - 1; i > 3; i--) {
-        obj = turtle.scene.children[i];
-        turtle.scene.remove(obj);
-    }
-
     // lsystem testing
     var result = lsystem.DoIterations(iterations);
+    console.log(LinkedListToString(result));
     turtle.clear();
-    //var turtle2 = new Turtle(turtle.scene);
+    turtle = new Turtle(turtle.scene);
     turtle.renderSymbols(result);
-
-    var str2 = LinkedListToString(result);
-    console.log(str2);
 }
 
 // called on frame updates
