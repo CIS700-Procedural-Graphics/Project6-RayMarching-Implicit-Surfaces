@@ -23,6 +23,10 @@ var WarpShader = new EffectComposer.ShaderPass({
         u_period: {
             type: 'f',
             value: options.period
+        },
+        u_t: {
+            type: 'f',
+            value: (new Date()).valueOf()
         }
     },
     vertexShader: require('../glsl/pass-vert.glsl'),
@@ -44,6 +48,8 @@ export default function Warp(renderer, scene, camera) {
     WarpShader.renderToScreen = true;
     composer.addPass(WarpShader)
 
+    var start = (new Date()).valueOf();
+
     return {
         initGUI: function(gui) {
             gui.add(options, 'amplitude').onChange(function(val) {
@@ -56,7 +62,8 @@ export default function Warp(renderer, scene, camera) {
         },
 
         render: function() {
-            composer.render()
+            WarpShader.material.uniforms.u_t.value = ((new Date()).valueOf() - start) / 10000.0;
+            composer.render();
         }
     }
 }
