@@ -87,6 +87,7 @@ window.addEventListener('load', function() {
         camera.position.set(5, 10, 15);
         const center = geo.boundingSphere.center;
         camera.lookAt(center);
+        controls.target.set(center.x, center.y, center.z);
     });
 
     (function tick() {
