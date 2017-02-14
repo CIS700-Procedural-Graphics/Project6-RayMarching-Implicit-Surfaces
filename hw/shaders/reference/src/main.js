@@ -5,8 +5,6 @@ const OrbitControls = require('three-orbit-controls')(THREE)
 
 import DAT from 'dat-gui'
 import Stats from 'stats-js'
-// import * as Shaders from './shaders'
-// import * as Post from './post'
 import {objLoaded} from './mario'
 import {setupGUI} from './setup'
 

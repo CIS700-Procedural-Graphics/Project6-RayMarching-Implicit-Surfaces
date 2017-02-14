@@ -56,7 +56,7 @@ export function setupGUI(shaderSet, postProcessSet) {
     }
 
     setShader(Object.keys(Shaders)[0]);
-    setPostProcess(Object.keys(Post)[3]);
+    setPostProcess(Object.keys(Post)[0]);
 
     return {
         setShader,
