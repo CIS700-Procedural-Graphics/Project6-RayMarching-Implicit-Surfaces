@@ -8,16 +8,19 @@ import Framework from './framework'
 import Noise from './improved_noise.js'
 import LUT from './marching_cube_LUT.js'
 import Grid from './grid.js'
+import EnumSampling from './grid.js'
 
-const DEFAULT_GRID_RES = 4;
-const DEFAULT_GRID_WIDTH = 10;
+const DEFAULT_ISO_LEVEL = 1.0;
+const DEFAULT_GRID_RES = 6;
+const DEFAULT_GRID_WIDTH = 20;
 const DEFAULT_NUM_METABALLS = 10;
-const DEFAULT_MAX_RADIUS = 1;
+const DEFAULT_MAX_RADIUS = 3;
 const DEFAULT_MAX_SPEED = 0.1;
 
 var App = {
   grid:             undefined,
   config: {
+    isolevel:       DEFAULT_ISO_LEVEL,
     gridRes:        DEFAULT_GRID_RES,
     gridWidth:      DEFAULT_GRID_WIDTH,
     gridCellWidth:  DEFAULT_GRID_WIDTH / DEFAULT_GRID_RES,
@@ -86,44 +89,34 @@ function setupGUI(gui) {
 
   // more information here: https://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
   // --- CONFIG ---
-  var GUIControls = function() {
-    this.speed = App.config.maxSpeed / 2.0;
-    this.samplingCorners = true
-  }
-  var guiControls = new GUIControls();
-  gui.add(guiControls, 'speed', 0, App.config.maxSpeed).onChange(function(value) {
-
+  gui.add(App.config, 'maxSpeed', 0, App.config.maxSpeed).onChange(function(value) {
+    App.config.maxSpeed = value;
   });
 
-  gui.add(guiControls, 'samplingCorners').onChange(function(value) {
-    if (value) {
-        App.grid.samplingPoint = EnumSampling.CORNERS;
-    } else {
-        App.grid.samplingPoint = EnumSampling.CENTER;
-    }
+  gui.add(App.grid, 'isSamplingCorner').onChange(function(value) {
+    App.grid.isSamplingCorner = value;
   });
 
   // --- DEBUG ---
-  var DebugOptions = function() {
-    this.showGrid = false;
-    this.showSpheres = false;
-  };
-  var debug = new DebugOptions();
-  var debugFolder = gui.addFolder('Debug');
-  debugFolder.add(debug, 'showGrid').onChange(function(value) {
+
+  var debugFolder = gui.addFolder('Grid');
+  debugFolder.add(App.grid, 'showGrid').onChange(function(value) {
+    App.grid.showGrid = value;
     if (value) {
       App.grid.show();
     } else {
       App.grid.hide();
     }
   });
-  debugFolder.add(debug, 'showSpheres').onChange(function(value) {
+
+  debugFolder.add(App.grid, 'showSpheres').onChange(function(value) {
+    App.grid.showSpheres = value;
     if (value) {
-      for (var i = 0; i < config.numMetaballs; i++) {
+      for (var i = 0; i < App.config.numMetaballs; i++) {
         App.grid.balls[i].show();
       }
     } else {
-      for (var i = 0; i < config.numMetaballs; i++) {
+      for (var i = 0; i < App.config.numMetaballs; i++) {
         App.grid.balls[i].hide();
       }
     }
