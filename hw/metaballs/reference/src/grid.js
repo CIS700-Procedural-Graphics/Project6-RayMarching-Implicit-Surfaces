@@ -2,16 +2,21 @@ const THREE = require('three');
 
 import Metaball from './metaball.js';
 import LUT from './marching_cube_LUT.js';
-export default class Grid {
+export default class Grid extends THREE.ImmediateRenderObject {
 
   constructor(app) {
-    
-    var material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
-    THREE.ImmediateRenderObject.call( this, material );
-    
+    var material = new THREE.MeshLambertMaterial( { color: 0xee2222});
+    super(material);
+      
+    this.init(app);
+  }
+
+  init(app) {
+    this.isPaused = false;    
     this.origin = new THREE.Vector3(0);
 
     this.isolevel = app.config.isolevel;
+    this.minRadius = app.config.minRadius;
     this.maxRadius = app.config.maxRadius;
 
     this.gridCellWidth = app.config.gridCellWidth;
@@ -32,51 +37,70 @@ export default class Grid {
     this.labels = [];
     this.balls = [];
 
-    this.showSpheres = true;
-    this.showGrid = true;
-    this.isSamplingCorner = false;
+    this.showSpheres = false;
+    this.showGrid = false;
+    this.isSamplingCorner = true;
 
     this.geometry = undefined;
     this.metaballMesh = undefined;
 
-    // Convert from 1D index to 3D indices
-    this.i1toi3 = function(i1) {
+    // Information for renderer
+    this.maxCount = 4096;
+    this.count = 0;
 
-      // [i % w, i % (h * w)) / w, i / (h * w)]
+    this.hasPositions = false;
+    this.hasNormals = false;
+    this.hasColors = false;
+    this.hasUvs = false;
+    this.enableColors = false;
+    this.enableUvs = false;
 
-      return [
-        i1 % this.res,
-        ~~ ((i1 % this.res2) / this.res), // @todo: add comment
-        ~~ (i1 / this.res2)
-        ];
-    };
+    this.positionArray = new Float32Array( this.maxCount * 3 );
+    this.normalArray   = new Float32Array( this.maxCount * 3 );
+    if (this.enableUvs) {
+      this.uvArray = new Float32Array( this.maxCount * 2 );
+    }
 
-    // Convert from 3D indices to 1 1D
-    this.i3toi1 = function(i3x, i3y, i3z) {
+    if (this.enableColors) {
+      this.colorArray   = new Float32Array( this.maxCount * 3 );
+    }    
 
-      // [x + y * w + z * w * h]
-
-      return i3x + i3y * this.res + i3z * this.res2;
-    };
-
-    // Convert from 3D indices to 3D positions
-    this.i3toPos = function(i3) {
-
-      return new THREE.Vector3(
-        i3[0] * this.gridCellWidth + this.origin.x + this.halfCellWidth,
-        i3[1] * this.gridCellWidth + this.origin.y + this.halfCellWidth,
-        i3[2] * this.gridCellWidth + this.origin.z + this.halfCellWidth
-        );
-    };
-
-    this.init();    
-  }
-
-  init() {
     this.setupCells();
     this.setupMetaballs();
     console.log("Grid init");
+
   };
+
+  // Convert from 1D index to 3D indices
+  i1toi3(i1) {
+
+    // [i % w, i % (h * w)) / w, i / (h * w)]
+
+    return [
+      i1 % this.res,
+      ~~ ((i1 % this.res2) / this.res), // @todo: add comment
+      ~~ (i1 / this.res2)
+      ];
+  };
+
+  // Convert from 3D indices to 1 1D
+  i3toi1(i3x, i3y, i3z) {
+
+    // [x + y * w + z * w * h]
+
+    return i3x + i3y * this.res + i3z * this.res2;
+  };
+
+  // Convert from 3D indices to 3D positions
+  i3toPos(i3) {
+
+    return new THREE.Vector3(
+      i3[0] * this.gridCellWidth + this.origin.x + this.halfCellWidth,
+      i3[1] * this.gridCellWidth + this.origin.y + this.halfCellWidth,
+      i3[2] * this.gridCellWidth + this.origin.z + this.halfCellWidth
+      );
+  };
+
 
   setupCells() {
     for (var i = 0; i < this.res3; i++) {
@@ -116,7 +140,7 @@ export default class Grid {
       vz = (Math.random() * 2 - 1) * this.maxSpeed;
       vel = new THREE.Vector3(vx, vy, vz);
       
-      radius = Math.random() * this.maxRadius + 0.5;
+      radius = Math.random() * (this.maxRadius - this.minRadius) + this.minRadius;
   
       var ball = new Metaball(pos, radius, vel, this.gridWidth);
       
@@ -125,15 +149,15 @@ export default class Grid {
     }
   }
 
-  render(renderCallback) {
-
-  }
-
   generateGeometry() {
     var geo = new THREE.Geometry();
   }
 
   update() {
+
+    if (this.isPaused) {
+      return;
+    }
 
     // Reset grid state
     for (var c = 0; c < this.res3; c++) {
@@ -170,6 +194,8 @@ export default class Grid {
       this.positionsArray = [];
       this.normalsArray = [];
 
+      // generateGeometry();
+
       // -- SAMPLE AT CORNERS
       // Color cells that have a sample > 1 at the corners
       for (var c = 0; c < this.res3; c++) {
@@ -178,19 +204,11 @@ export default class Grid {
           for (var b = 0; b < this.balls.length; b++) {
 
             // Accumulate f for each metaball relative to this cell
-            this.cells[c].corners[cp].isovalue += this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos);
+            this.cells[c].corners[cp].isovalue += (this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos));
 
             if (this.cells[c].corners[cp].isovalue > this.isolevel) {
-              this.cells[c].corners[cp].show();
+              //this.cells[c].corners[cp].show();
             }
-          }
-
-          // Draw edges
-          var polygon = this.cells[c].polygonize(this.isolevel);
-
-          if (polygon !== null && polygon !== undefined) {
-            this.positionsArray.push.apply(this.positionsArray, polygon.vertPositions);
-            this.normalsArray.push.apply(this.normalsArray, polygon.vertNormals);
           }
 
           // Update label
@@ -201,6 +219,14 @@ export default class Grid {
 
           this.cells[c].corners[cp].updateLabel(this.camera);
         }
+
+        // Draw edges
+        var polygon = this.cells[c].polygonize(this.isolevel);
+
+        if (polygon !== null && polygon !== undefined) {
+          this.positionsArray.push.apply(this.positionsArray, polygon.vertPositions);
+          this.normalsArray.push.apply(this.normalsArray, polygon.vertNormals);
+        }        
       }
 
       if (this.metaballMesh !== undefined) {
@@ -230,10 +256,18 @@ export default class Grid {
         this.geometry.faces.push(new THREE.Face3(a, b, c, [this.normalsArray[a], this.normalsArray[b], this.normalsArray[c]]));
       }
 
-      var material = new THREE.MeshBasicMaterial( { color: 0xee2222});
+      var material = new THREE.MeshLambertMaterial({ color: 0xee2222});
       this.metaballMesh = new THREE.Mesh(this.geometry, material);
       this.scene.add(this.metaballMesh);
     }     
+  }
+
+  pause() {
+    this.isPaused = true;
+  }
+
+  play() {
+    this.isPaused = false;
   }
 
   show() {
@@ -249,6 +283,108 @@ export default class Grid {
     }
     this.showGrid = false;
   };
+
+  begin() {
+
+    this.count = 0;
+
+    this.hasPositions = false;
+    this.hasNormals = false;
+    this.hasUvs = false;
+    this.hasColors = false;
+  };
+
+  end(renderCallback) {
+    
+    if ( this.count === 0 ) return;
+
+    for ( var i = this.count * 3; i < this.positionArray.length; i ++ ) {
+      this.positionArray[ i ] = 0.0;
+    }
+
+    this.hasPositions = true;
+    this.hasNormals = true;
+
+    renderCallback(this);
+  }
+
+  render(renderCallback) {
+    this.begin();
+
+    console.log("render grid");
+
+    // Color cells that have a sample > 1 at the corners
+    for (var c = 0; c < this.res3; c++) {
+      for (var cp = 0; cp < 8; cp++) {
+        this.cells[c].corners[cp].isovalue = 0;
+        for (var b = 0; b < this.balls.length; b++) {
+
+          // Accumulate f for each metaball relative to this cell
+          this.cells[c].corners[cp].isovalue += (this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos));
+
+          if (this.cells[c].corners[cp].isovalue > this.isolevel) {
+            //this.cells[c].corners[cp].show();
+          }
+        }
+      }
+
+      // Draw edges
+      var polygon = this.cells[c].polygonize(this.isolevel);
+
+      if (polygon !== null && polygon !== undefined) {
+        for (var v = 0; v < polygon.vertPositions.lenght; v++) {
+          this.positionArray[this.count + i] = polygon.vertPositions[i];
+          this.normalArray[this.count + i] = polygon.vertNormals[i];
+
+          if (this.enableColors) {
+            this.colorArray[this.count + i] = polygon.vertPositions[i];            
+          }
+        }
+      }
+      this.count += polygon.vertices.length;   
+    }
+
+    this.end(renderCallback);
+  }
+
+  generateGeometry() {
+    console.log("generateGeometry");
+
+    var start = 0, geo = new THREE.Geometry();
+    var normals = [];
+
+    var geoCallback = function(object) {
+      for (var i = 0; i < object.count; i++) {
+        var vertex = object.positionArray[i];
+        var normal = object.normalArray[i];
+
+        geo.vertices.push(vertex);
+        normals.push(normal);
+      }
+
+      var nFaces = object.count / 3;
+      for (var i = 0; i < nFaces; i++) {
+
+        var a = start + i;
+        var b = a + 1;
+        var c = a + 2;
+
+        var na = normals[a];
+        var nb = normals[b];
+        var nc = normals[c];
+
+        var face = new THREE.Face3(a, b, c, [na, nb, nc]);
+        geo.faces.push(face);
+      }
+
+      start += nFaces;
+      object.count = 0;
+    }
+
+    this.render(geoCallback);
+
+    return geo;
+  }  
 };
 
 // === Inspect points
@@ -471,6 +607,7 @@ class Cell {
       return;
     }
 
+    // Create vertices based on linear interpolation between voxel corners
     if (edges & 1) {
       vertexList[0] = this.vertexInterpolation(isolevel, this.corners[0], this.corners[1]);
     }

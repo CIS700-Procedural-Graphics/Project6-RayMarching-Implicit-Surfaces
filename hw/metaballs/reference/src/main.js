@@ -10,11 +10,12 @@ import LUT from './marching_cube_LUT.js'
 import Grid from './grid.js'
 import EnumSampling from './grid.js'
 
-const DEFAULT_ISO_LEVEL = 1.0;
-const DEFAULT_GRID_RES = 6;
-const DEFAULT_GRID_WIDTH = 20;
+const DEFAULT_ISO_LEVEL = 0.7;
+const DEFAULT_GRID_RES = 10;
+const DEFAULT_GRID_WIDTH = 10;
 const DEFAULT_NUM_METABALLS = 10;
-const DEFAULT_MAX_RADIUS = 3;
+const DEFAULT_MIN_RADIUS = 1;
+const DEFAULT_MAX_RADIUS = 1;
 const DEFAULT_MAX_SPEED = 0.1;
 
 var App = {
@@ -25,11 +26,13 @@ var App = {
     gridWidth:      DEFAULT_GRID_WIDTH,
     gridCellWidth:  DEFAULT_GRID_WIDTH / DEFAULT_GRID_RES,
     numMetaballs:   DEFAULT_NUM_METABALLS,
+    minRadius:      DEFAULT_MIN_RADIUS,
     maxRadius:      DEFAULT_MAX_RADIUS,
     maxSpeed:       DEFAULT_MAX_SPEED
   },
   camera:           undefined,
   scene:            undefined,
+  isPaused:         false,
   insPointsGrp:     new THREE.Group(),
   cellsGrp:         new THREE.Group()
 };
@@ -83,14 +86,20 @@ function setupLights(scene) {
 
 function setupScene(scene) {
   App.grid = new Grid(App);
+  scene.add(App.grid);
 }
 
 function setupGUI(gui) {
 
   // more information here: https://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
   // --- CONFIG ---
-  gui.add(App.config, 'maxSpeed', 0, App.config.maxSpeed).onChange(function(value) {
-    App.config.maxSpeed = value;
+  gui.add(App, 'isPaused').onChange(function(value) {
+    App.isPaused = value;
+    if (value) {
+      App.grid.pause();
+    } else {
+      App.grid.play();
+    }
   });
 
   gui.add(App.grid, 'isSamplingCorner').onChange(function(value) {

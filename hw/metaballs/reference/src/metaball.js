@@ -33,13 +33,14 @@ export default class Metaball {
   update() {
 
     var temp = this.pos.add(this.vel);
-    if ((temp.x - this.radius) < 0 || (temp.x + this.radius) > this.gridWidth) {
+    var margin = this.radius;
+    if ((temp.x - this.radius2 - margin) < 0 || (temp.x + this.radius2 + margin) > this.gridWidth) {
       this.vel.x *= -1;
     }
-    if ((temp.y - this.radius) < 0 || (temp.y + this.radius) > this.gridWidth) {
+    if ((temp.y - this.radius2 - margin) < 0 || (temp.y + this.radius2 + margin) > this.gridWidth) {
       this.vel.y *= -1;
     }
-    if ((temp.z - this.radius) < 0 || (temp.z + this.radius) > this.gridWidth) {
+    if ((temp.z - this.radius2 - margin) < 0 || (temp.z + this.radius2 + margin) > this.gridWidth) {
       this.vel.z *= -1;
     }
     this.pos = this.pos.add(this.vel);
