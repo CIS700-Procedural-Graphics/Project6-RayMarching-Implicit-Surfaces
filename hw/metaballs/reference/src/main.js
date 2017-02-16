@@ -11,12 +11,12 @@ import Grid from './grid.js'
 import EnumSampling from './grid.js'
 
 const DEFAULT_ISO_LEVEL = 0.7;
-const DEFAULT_GRID_RES = 10;
+const DEFAULT_GRID_RES = 15;
 const DEFAULT_GRID_WIDTH = 10;
 const DEFAULT_NUM_METABALLS = 10;
 const DEFAULT_MIN_RADIUS = 1;
 const DEFAULT_MAX_RADIUS = 1;
-const DEFAULT_MAX_SPEED = 0.1;
+const DEFAULT_MAX_SPEED = 0.2;
 
 var App = {
   grid:             undefined,
@@ -86,7 +86,7 @@ function setupLights(scene) {
 
 function setupScene(scene) {
   App.grid = new Grid(App);
-  scene.add(App.grid);
+  // scene.add(App.grid);
 }
 
 function setupGUI(gui) {

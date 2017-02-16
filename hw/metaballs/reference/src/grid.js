@@ -41,34 +41,65 @@ export default class Grid extends THREE.ImmediateRenderObject {
     this.showGrid = false;
     this.isSamplingCorner = true;
 
-    this.geometry = undefined;
-    this.metaballMesh = undefined;
-
-    // Information for renderer
+    // Initialize geometry
     this.maxCount = 4096;
     this.count = 0;
-
-    this.hasPositions = false;
-    this.hasNormals = false;
-    this.hasColors = false;
-    this.hasUvs = false;
-    this.enableColors = false;
-    this.enableUvs = false;
-
-    this.positionArray = new Float32Array( this.maxCount * 3 );
-    this.normalArray   = new Float32Array( this.maxCount * 3 );
-    if (this.enableUvs) {
-      this.uvArray = new Float32Array( this.maxCount * 2 );
+    this.geometry = new THREE.Geometry();
+    this.positionsArray = [];
+    for (var i = 0; i < this.maxCount; i++) {
+      this.positionsArray.push(new THREE.Vector3(0, 0, 0));
+      this.geometry.vertices.push(new THREE.Vector3(0, 0, 0));
     }
+    this.normalsArray = [];
+    for (var i = 0; i < this.maxCount; i++) {
+      this.normalsArray.push(new THREE.Vector3(0, 1, 0));
+    }
+    var start = 0;
+    var nFaces = Math.floor(this.positionsArray.length / 3);
+    for (var i = 0; i < nFaces; i++) {
+      var a = (start + i) * 3;
+      var b = a + 1;
+      var c = a + 2;
+      var na = this.normalsArray[a];
+      var nb = this.normalsArray[b];
+      var nc = this.normalsArray[c];
+      this.geometry.faces.push(new THREE.Face3(a, b, c, [na, nb, nc]));
+    }
+    this.geometry.computeBoundingSphere();    
+    this.geometry.dynamic = true;
+    this.geometry.verticesNeedUpdate = true;
 
-    if (this.enableColors) {
-      this.colorArray   = new Float32Array( this.maxCount * 3 );
-    }    
+    if (app.config.material === undefined) {
+      this.material = new THREE.MeshLambertMaterial({ color: 0xee2222});
+    } else {
+      this.material = app.config.material;
+    }
+    this.metaballMesh = new THREE.Mesh(this.geometry, this.material);
+
+    // Information for renderer
+
+    // this.hasPositions = false;
+    // this.hasNormals = false;
+    // this.hasColors = false;
+    // this.hasUvs = false;
+    // this.enableColors = false;
+    // this.enableUvs = false;
+
+    // this.positionArray = new Float32Array( this.maxCount * 3 );
+    // this.normalArray   = new Float32Array( this.maxCount * 3 );
+    // if (this.enableUvs) {
+    //   this.uvArray = new Float32Array( this.maxCount * 2 );
+    // }
+
+    // if (this.enableColors) {
+    //   this.colorArray   = new Float32Array( this.maxCount * 3 );
+    // }    
 
     this.setupCells();
     this.setupMetaballs();
     console.log("Grid init");
 
+    this.scene.add(this.metaballMesh);
   };
 
   // Convert from 1D index to 3D indices
@@ -108,16 +139,16 @@ export default class Grid extends THREE.ImmediateRenderObject {
       var {x, y, z} = this.i3toPos(i3);
       var cell = new Cell(new THREE.Vector3(x, y, z), this.gridCellWidth);
 
-      this.scene.add(cell.wireframe);
-      this.scene.add(cell.mesh);
-      this.scene.add(cell.center.mesh);
+      // this.scene.add(cell.wireframe);
+      // this.scene.add(cell.mesh);
+      // this.scene.add(cell.center.mesh);
       
       for (var cp = 0; cp < 8; cp++) {
-        this.scene.add(cell.corners[cp].mesh);
+        // this.scene.add(cell.corners[cp].mesh);
       }
       
       for (var e = 0; e < 12; e++) {
-        this.scene.add(cell.edges[e].mesh);
+        // this.scene.add(cell.edges[e].mesh);
       }
 
       this.cells.push(cell);
@@ -144,13 +175,9 @@ export default class Grid extends THREE.ImmediateRenderObject {
   
       var ball = new Metaball(pos, radius, vel, this.gridWidth);
       
-      this.scene.add(ball.mesh);
+      // this.scene.add(ball.mesh);
       this.balls.push(ball);
     }
-  }
-
-  generateGeometry() {
-    var geo = new THREE.Geometry();
   }
 
   update() {
@@ -162,7 +189,7 @@ export default class Grid extends THREE.ImmediateRenderObject {
     // Reset grid state
     for (var c = 0; c < this.res3; c++) {
       // Clear cells
-      this.cells[c].hide();
+      // this.cells[c].hide();
     }
 
     if (this.isSamplingCorner === false) {
@@ -190,13 +217,11 @@ export default class Grid extends THREE.ImmediateRenderObject {
 
     } else {
 
-      this.geometry = new THREE.Geometry();
+      // -- SAMPLE AT CORNERS
       this.positionsArray = [];
       this.normalsArray = [];
-
-      // generateGeometry();
-
-      // -- SAMPLE AT CORNERS
+      
+      this.count = 0;
       // Color cells that have a sample > 1 at the corners
       for (var c = 0; c < this.res3; c++) {
         for (var cp = 0; cp < 8; cp++) {
@@ -207,17 +232,17 @@ export default class Grid extends THREE.ImmediateRenderObject {
             this.cells[c].corners[cp].isovalue += (this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos));
 
             if (this.cells[c].corners[cp].isovalue > this.isolevel) {
-              //this.cells[c].corners[cp].show();
+              // this.cells[c].corners[cp].show();
             }
           }
 
-          // Update label
-          if (this.showGrid === false) {
-            this.cells[c].corners[cp].clearLabel();
-            continue;
-          }
+          // // Update label
+          // if (this.showGrid === false) {
+          //   this.cells[c].corners[cp].clearLabel();
+          //   continue;
+          // }
 
-          this.cells[c].corners[cp].updateLabel(this.camera);
+          // this.cells[c].corners[cp].updateLabel(this.camera);
         }
 
         // Draw edges
@@ -226,13 +251,14 @@ export default class Grid extends THREE.ImmediateRenderObject {
         if (polygon !== null && polygon !== undefined) {
           this.positionsArray.push.apply(this.positionsArray, polygon.vertPositions);
           this.normalsArray.push.apply(this.normalsArray, polygon.vertNormals);
-        }        
+          for (var i = 0; i < polygon.vertPositions.length; i++) {
+            // this.positionsArray[this.count + i] = polygon.vertPositions[i];
+            // this.positionsArray[this.count + i] = polygon.vertNormals[i];              
+          }
+          this.count += polygon.vertPositions.length;       
+        } 
       }
-
-      if (this.metaballMesh !== undefined) {
-        this.scene.remove(this.metaballMesh);
-      }
-      this.makeMesh();
+      this.updateMesh();
     }
 
     // Move metaballs
@@ -242,24 +268,26 @@ export default class Grid extends THREE.ImmediateRenderObject {
 
   }
 
-  makeMesh() {
-    if (this.positionsArray.length > 0) {
-      var start = 0;
-      for (var i = 0; i < this.positionsArray.length; i++) {
-        this.geometry.vertices.push(this.positionsArray[i]);
-      }
+  updateMesh() {
+    this.geometry = new THREE.Geometry();
+    for (var i = 0; i < this.positionsArray.length; i++) {
+      this.geometry.vertices.push(this.positionsArray[i]);
+    }
 
-      for (var i = 0; i < this.positionsArray.length / 3; i++) {
-        var a = (start + i) * 3;
-        var b = a + 1;
-        var c = a + 2;
-        this.geometry.faces.push(new THREE.Face3(a, b, c, [this.normalsArray[a], this.normalsArray[b], this.normalsArray[c]]));
-      }
+    var nFaces = this.positionsArray.length / 3;
+    for (var i = 0; i < nFaces; i++) {
+      var a = i * 3;
+      var b = a + 1;
+      var c = a + 2;
+      this.geometry.faces.push(new THREE.Face3(a, b, c, [this.normalsArray[a], this.normalsArray[b], this.normalsArray[c]]));
+    }
 
-      var material = new THREE.MeshLambertMaterial({ color: 0xee2222});
-      this.metaballMesh = new THREE.Mesh(this.geometry, material);
-      this.scene.add(this.metaballMesh);
-    }     
+    if (this.metaballMesh !== undefined) {
+      this.scene.remove(this.metaballMesh);
+    }
+    this.metaballMesh = new THREE.Mesh(this.geometry, this.material);
+    this.scene.add(this.metaballMesh);
+
   }
 
   pause() {
@@ -284,107 +312,107 @@ export default class Grid extends THREE.ImmediateRenderObject {
     this.showGrid = false;
   };
 
-  begin() {
+  // begin() {
 
-    this.count = 0;
+  //   this.count = 0;
 
-    this.hasPositions = false;
-    this.hasNormals = false;
-    this.hasUvs = false;
-    this.hasColors = false;
-  };
+  //   this.hasPositions = false;
+  //   this.hasNormals = false;
+  //   this.hasUvs = false;
+  //   this.hasColors = false;
+  // };
 
-  end(renderCallback) {
+  // end(renderCallback) {
     
-    if ( this.count === 0 ) return;
+  //   if ( this.count === 0 ) return;
 
-    for ( var i = this.count * 3; i < this.positionArray.length; i ++ ) {
-      this.positionArray[ i ] = 0.0;
-    }
+  //   for ( var i = this.count * 3; i < this.positionArray.length; i ++ ) {
+  //     this.positionArray[ i ] = 0.0;
+  //   }
 
-    this.hasPositions = true;
-    this.hasNormals = true;
+  //   this.hasPositions = true;
+  //   this.hasNormals = true;
 
-    renderCallback(this);
-  }
+  //   renderCallback(this);
+  // }
 
-  render(renderCallback) {
-    this.begin();
+  // render(renderCallback) {
+  //   this.begin();
 
-    console.log("render grid");
+  //   console.log("render grid");
 
-    // Color cells that have a sample > 1 at the corners
-    for (var c = 0; c < this.res3; c++) {
-      for (var cp = 0; cp < 8; cp++) {
-        this.cells[c].corners[cp].isovalue = 0;
-        for (var b = 0; b < this.balls.length; b++) {
+  //   // Color cells that have a sample > 1 at the corners
+  //   for (var c = 0; c < this.res3; c++) {
+  //     for (var cp = 0; cp < 8; cp++) {
+  //       this.cells[c].corners[cp].isovalue = 0;
+  //       for (var b = 0; b < this.balls.length; b++) {
 
-          // Accumulate f for each metaball relative to this cell
-          this.cells[c].corners[cp].isovalue += (this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos));
+  //         // Accumulate f for each metaball relative to this cell
+  //         this.cells[c].corners[cp].isovalue += (this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos));
 
-          if (this.cells[c].corners[cp].isovalue > this.isolevel) {
-            //this.cells[c].corners[cp].show();
-          }
-        }
-      }
+  //         if (this.cells[c].corners[cp].isovalue > this.isolevel) {
+  //           //this.cells[c].corners[cp].show();
+  //         }
+  //       }
+  //     }
 
-      // Draw edges
-      var polygon = this.cells[c].polygonize(this.isolevel);
+  //     // Draw edges
+  //     var polygon = this.cells[c].polygonize(this.isolevel);
 
-      if (polygon !== null && polygon !== undefined) {
-        for (var v = 0; v < polygon.vertPositions.lenght; v++) {
-          this.positionArray[this.count + i] = polygon.vertPositions[i];
-          this.normalArray[this.count + i] = polygon.vertNormals[i];
+  //     if (polygon !== null && polygon !== undefined) {
+  //       for (var v = 0; v < polygon.vertPositions.lenght; v++) {
+  //         this.positionArray[this.count + i] = polygon.vertPositions[i];
+  //         this.normalArray[this.count + i] = polygon.vertNormals[i];
 
-          if (this.enableColors) {
-            this.colorArray[this.count + i] = polygon.vertPositions[i];            
-          }
-        }
-      }
-      this.count += polygon.vertices.length;   
-    }
+  //         if (this.enableColors) {
+  //           this.colorArray[this.count + i] = polygon.vertPositions[i];            
+  //         }
+  //       }
+  //     }
+  //     this.count += polygon.vertices.length;   
+  //   }
 
-    this.end(renderCallback);
-  }
+  //   this.end(renderCallback);
+  // }
 
-  generateGeometry() {
-    console.log("generateGeometry");
+  // generateGeometry() {
+  //   console.log("generateGeometry");
 
-    var start = 0, geo = new THREE.Geometry();
-    var normals = [];
+  //   var start = 0, geo = new THREE.Geometry();
+  //   var normals = [];
 
-    var geoCallback = function(object) {
-      for (var i = 0; i < object.count; i++) {
-        var vertex = object.positionArray[i];
-        var normal = object.normalArray[i];
+  //   var geoCallback = function(object) {
+  //     for (var i = 0; i < object.count; i++) {
+  //       var vertex = object.positionArray[i];
+  //       var normal = object.normalArray[i];
 
-        geo.vertices.push(vertex);
-        normals.push(normal);
-      }
+  //       geo.vertices.push(vertex);
+  //       normals.push(normal);
+  //     }
 
-      var nFaces = object.count / 3;
-      for (var i = 0; i < nFaces; i++) {
+  //     var nFaces = object.count / 3;
+  //     for (var i = 0; i < nFaces; i++) {
 
-        var a = start + i;
-        var b = a + 1;
-        var c = a + 2;
+  //       var a = start + i;
+  //       var b = a + 1;
+  //       var c = a + 2;
 
-        var na = normals[a];
-        var nb = normals[b];
-        var nc = normals[c];
+  //       var na = normals[a];
+  //       var nb = normals[b];
+  //       var nc = normals[c];
 
-        var face = new THREE.Face3(a, b, c, [na, nb, nc]);
-        geo.faces.push(face);
-      }
+  //       var face = new THREE.Face3(a, b, c, [na, nb, nc]);
+  //       geo.faces.push(face);
+  //     }
 
-      start += nFaces;
-      object.count = 0;
-    }
+  //     start += nFaces;
+  //     object.count = 0;
+  //   }
 
-    this.render(geoCallback);
+  //   this.render(geoCallback);
 
-    return geo;
-  }  
+  //   return geo;
+  // }  
 };
 
 // === Inspect points
