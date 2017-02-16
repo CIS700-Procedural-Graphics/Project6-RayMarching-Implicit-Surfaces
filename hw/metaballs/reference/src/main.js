@@ -11,10 +11,10 @@ import Grid from './grid.js'
 import EnumSampling from './grid.js'
 
 const DEFAULT_ISO_LEVEL = 0.7;
-const DEFAULT_GRID_RES = 15;
+const DEFAULT_GRID_RES = 32;
 const DEFAULT_GRID_WIDTH = 10;
 const DEFAULT_NUM_METABALLS = 10;
-const DEFAULT_MIN_RADIUS = 1;
+const DEFAULT_MIN_RADIUS = 0.5;
 const DEFAULT_MAX_RADIUS = 1;
 const DEFAULT_MAX_SPEED = 0.2;
 
@@ -45,7 +45,7 @@ function onLoad(framework) {
   App.camera = camera;
 
   renderer.setClearColor( 0xbfd1e5 );
-  scene.add(new THREE.AxisHelper(20));
+  // scene.add(new THREE.AxisHelper(20));
 
   setupCamera(App.camera);
   setupLights(App.scene);
@@ -69,7 +69,7 @@ function onUpdate(framework) {
 
 function setupCamera(camera) {
   // set camera position
-  camera.position.set(5, 5, 50);
+  camera.position.set(5, 5, 30);
   camera.lookAt(new THREE.Vector3(0,0,0));
 }
 
@@ -86,7 +86,6 @@ function setupLights(scene) {
 
 function setupScene(scene) {
   App.grid = new Grid(App);
-  // scene.add(App.grid);
 }
 
 function setupGUI(gui) {

@@ -33,7 +33,7 @@ export default class Metaball {
   update() {
 
     var temp = this.pos.add(this.vel);
-    var margin = this.radius;
+    var margin = this.radius2 * 2;
     if ((temp.x - this.radius2 - margin) < 0 || (temp.x + this.radius2 + margin) > this.gridWidth) {
       this.vel.x *= -1;
     }

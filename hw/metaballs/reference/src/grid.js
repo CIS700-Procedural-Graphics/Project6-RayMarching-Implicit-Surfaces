@@ -2,12 +2,9 @@ const THREE = require('three');
 
 import Metaball from './metaball.js';
 import LUT from './marching_cube_LUT.js';
-export default class Grid extends THREE.ImmediateRenderObject {
+export default class Grid {
 
-  constructor(app) {
-    var material = new THREE.MeshLambertMaterial( { color: 0xee2222});
-    super(material);
-      
+  constructor(app) {      
     this.init(app);
   }
 
@@ -41,60 +38,13 @@ export default class Grid extends THREE.ImmediateRenderObject {
     this.showGrid = false;
     this.isSamplingCorner = true;
 
-    // Initialize geometry
-    this.maxCount = 4096;
-    this.count = 0;
-    this.geometry = new THREE.Geometry();
-    this.positionsArray = [];
-    for (var i = 0; i < this.maxCount; i++) {
-      this.positionsArray.push(new THREE.Vector3(0, 0, 0));
-      this.geometry.vertices.push(new THREE.Vector3(0, 0, 0));
-    }
-    this.normalsArray = [];
-    for (var i = 0; i < this.maxCount; i++) {
-      this.normalsArray.push(new THREE.Vector3(0, 1, 0));
-    }
-    var start = 0;
-    var nFaces = Math.floor(this.positionsArray.length / 3);
-    for (var i = 0; i < nFaces; i++) {
-      var a = (start + i) * 3;
-      var b = a + 1;
-      var c = a + 2;
-      var na = this.normalsArray[a];
-      var nb = this.normalsArray[b];
-      var nc = this.normalsArray[c];
-      this.geometry.faces.push(new THREE.Face3(a, b, c, [na, nb, nc]));
-    }
-    this.geometry.computeBoundingSphere();    
-    this.geometry.dynamic = true;
-    this.geometry.verticesNeedUpdate = true;
-
     if (app.config.material === undefined) {
       this.material = new THREE.MeshLambertMaterial({ color: 0xee2222});
     } else {
       this.material = app.config.material;
     }
-    this.metaballMesh = new THREE.Mesh(this.geometry, this.material);
 
-    // Information for renderer
-
-    // this.hasPositions = false;
-    // this.hasNormals = false;
-    // this.hasColors = false;
-    // this.hasUvs = false;
-    // this.enableColors = false;
-    // this.enableUvs = false;
-
-    // this.positionArray = new Float32Array( this.maxCount * 3 );
-    // this.normalArray   = new Float32Array( this.maxCount * 3 );
-    // if (this.enableUvs) {
-    //   this.uvArray = new Float32Array( this.maxCount * 2 );
-    // }
-
-    // if (this.enableColors) {
-    //   this.colorArray   = new Float32Array( this.maxCount * 3 );
-    // }    
-
+    this.setupMesh();
     this.setupCells();
     this.setupMetaballs();
     console.log("Grid init");
@@ -132,6 +82,34 @@ export default class Grid extends THREE.ImmediateRenderObject {
       );
   };
 
+  setupMesh() {
+    this.maxCount = 4096;
+    this.count = 0;
+    this.geometry = new THREE.Geometry();
+    this.positionsArray = [];
+    for (var i = 0; i < this.maxCount; i++) {
+      this.positionsArray.push(new THREE.Vector3(0, 0, 0));
+      this.geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+    }
+    this.normalsArray = [];
+    for (var i = 0; i < this.maxCount; i++) {
+      this.normalsArray.push(new THREE.Vector3(0, 1, 0));
+    }
+    var start = 0;
+    var nFaces = Math.floor(this.positionsArray.length / 3);
+    for (var i = 0; i < nFaces; i++) {
+      var a = (start + i) * 3;
+      var b = a + 1;
+      var c = a + 2;
+      var na = this.normalsArray[a];
+      var nb = this.normalsArray[b];
+      var nc = this.normalsArray[c];
+      this.geometry.faces.push(new THREE.Face3(a, b, c, [na, nb, nc]));
+    }
+    this.geometry.dynamic = true;
+
+    this.metaballMesh = new THREE.Mesh(this.geometry, this.material);
+  }
 
   setupCells() {
     for (var i = 0; i < this.res3; i++) {
@@ -158,12 +136,16 @@ export default class Grid extends THREE.ImmediateRenderObject {
   setupMetaballs() {
     var x, y, z, vx, vy, vz, radius, pos, vel;
     var matLambertWhite = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+    var maxRadiusTRippled = this.maxRadius * 3;
     var maxRadiusDoubled = this.maxRadius * 2;
 
     for (var i = 0; i < this.numMetaballs; i++) {
-      x = Math.random() * (this.gridWidth - maxRadiusDoubled) + this.maxRadius;
-      y = Math.random() * (this.gridWidth - maxRadiusDoubled) + this.maxRadius;
-      z = Math.random() * (this.gridWidth - maxRadiusDoubled) + this.maxRadius;      
+      x = Math.random() * (this.gridWidth - maxRadiusTRippled) + maxRadiusDoubled;
+      y = Math.random() * (this.gridWidth - maxRadiusTRippled) + maxRadiusDoubled;
+      z = Math.random() * (this.gridWidth - maxRadiusTRippled) + maxRadiusDoubled;  
+      x = this.gridWidth / 2;    
+      y = this.gridWidth / 2;    
+      z = this.gridWidth / 2;    
       pos = new THREE.Vector3(x, y, z);
       
       vx = (Math.random() * 2 - 1) * this.maxSpeed;
@@ -281,12 +263,14 @@ export default class Grid extends THREE.ImmediateRenderObject {
       var c = a + 2;
       this.geometry.faces.push(new THREE.Face3(a, b, c, [this.normalsArray[a], this.normalsArray[b], this.normalsArray[c]]));
     }
+    this.metaballMesh.geometry = this.geometry;
 
-    if (this.metaballMesh !== undefined) {
-      this.scene.remove(this.metaballMesh);
-    }
-    this.metaballMesh = new THREE.Mesh(this.geometry, this.material);
-    this.scene.add(this.metaballMesh);
+    // this.geometry.verticesNeedUpdate = true;
+    // if (this.metaballMesh !== undefined) {
+    //   this.scene.remove(this.metaballMesh);
+    // }
+    // this.metaballMesh = new THREE.Mesh(this.geometry, this.material);
+    // this.scene.add(this.metaballMesh);
 
   }
 
@@ -311,108 +295,6 @@ export default class Grid extends THREE.ImmediateRenderObject {
     }
     this.showGrid = false;
   };
-
-  // begin() {
-
-  //   this.count = 0;
-
-  //   this.hasPositions = false;
-  //   this.hasNormals = false;
-  //   this.hasUvs = false;
-  //   this.hasColors = false;
-  // };
-
-  // end(renderCallback) {
-    
-  //   if ( this.count === 0 ) return;
-
-  //   for ( var i = this.count * 3; i < this.positionArray.length; i ++ ) {
-  //     this.positionArray[ i ] = 0.0;
-  //   }
-
-  //   this.hasPositions = true;
-  //   this.hasNormals = true;
-
-  //   renderCallback(this);
-  // }
-
-  // render(renderCallback) {
-  //   this.begin();
-
-  //   console.log("render grid");
-
-  //   // Color cells that have a sample > 1 at the corners
-  //   for (var c = 0; c < this.res3; c++) {
-  //     for (var cp = 0; cp < 8; cp++) {
-  //       this.cells[c].corners[cp].isovalue = 0;
-  //       for (var b = 0; b < this.balls.length; b++) {
-
-  //         // Accumulate f for each metaball relative to this cell
-  //         this.cells[c].corners[cp].isovalue += (this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos));
-
-  //         if (this.cells[c].corners[cp].isovalue > this.isolevel) {
-  //           //this.cells[c].corners[cp].show();
-  //         }
-  //       }
-  //     }
-
-  //     // Draw edges
-  //     var polygon = this.cells[c].polygonize(this.isolevel);
-
-  //     if (polygon !== null && polygon !== undefined) {
-  //       for (var v = 0; v < polygon.vertPositions.lenght; v++) {
-  //         this.positionArray[this.count + i] = polygon.vertPositions[i];
-  //         this.normalArray[this.count + i] = polygon.vertNormals[i];
-
-  //         if (this.enableColors) {
-  //           this.colorArray[this.count + i] = polygon.vertPositions[i];            
-  //         }
-  //       }
-  //     }
-  //     this.count += polygon.vertices.length;   
-  //   }
-
-  //   this.end(renderCallback);
-  // }
-
-  // generateGeometry() {
-  //   console.log("generateGeometry");
-
-  //   var start = 0, geo = new THREE.Geometry();
-  //   var normals = [];
-
-  //   var geoCallback = function(object) {
-  //     for (var i = 0; i < object.count; i++) {
-  //       var vertex = object.positionArray[i];
-  //       var normal = object.normalArray[i];
-
-  //       geo.vertices.push(vertex);
-  //       normals.push(normal);
-  //     }
-
-  //     var nFaces = object.count / 3;
-  //     for (var i = 0; i < nFaces; i++) {
-
-  //       var a = start + i;
-  //       var b = a + 1;
-  //       var c = a + 2;
-
-  //       var na = normals[a];
-  //       var nb = normals[b];
-  //       var nc = normals[c];
-
-  //       var face = new THREE.Face3(a, b, c, [na, nb, nc]);
-  //       geo.faces.push(face);
-  //     }
-
-  //     start += nFaces;
-  //     object.count = 0;
-  //   }
-
-  //   this.render(geoCallback);
-
-  //   return geo;
-  // }  
 };
 
 // === Inspect points
@@ -430,8 +312,8 @@ class Inspectpoint {
   }
 
   init() {
-    this.makeMesh();
-    this.makeLabel();
+    // this.makeMesh();
+    // this.makeLabel();
   };
 
   makeMesh() {
@@ -461,7 +343,7 @@ class Inspectpoint {
 
   hide() {
     this.mesh.visible = false;
-    this.clearLabel();
+    // this.clearLabel();
   }
 
   updatePosition(newPos) {
