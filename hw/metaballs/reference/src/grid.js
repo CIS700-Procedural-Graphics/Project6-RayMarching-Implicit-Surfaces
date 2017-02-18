@@ -2,6 +2,32 @@ const THREE = require('three');
 
 import Metaball from './metaball.js';
 import LUT from './marching_cube_LUT.js';
+
+var startTime = Date.now();
+
+var noiseMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    tExplosion: {
+      type: "t", 
+      value: THREE.ImageUtils.loadTexture('./explosion.png') //pyroclastic_gradients
+    },
+    time: { // float initialized to 0
+      type: "f", 
+      value: 0.0 
+    },
+    noiseStrength: { // float initialized to 0
+      type: "f", 
+      value: 10.0 
+    },
+    bStrength: { // float initialized to 0
+      type: "f", 
+      value: 2.0 
+    }
+  },
+  vertexShader: require('./glsl/metaball-vert.glsl'),
+  fragmentShader: require('./glsl/metaball-frag.glsl')
+})
+
 export default class Grid {
 
   constructor(app) {      
@@ -39,7 +65,7 @@ export default class Grid {
     this.isSamplingCorner = true;
 
     if (app.config.material === undefined) {
-      this.material = new THREE.MeshLambertMaterial({ color: 0xee2222});
+      this.material = new THREE.MeshPhongMaterial({ color: 0xff6a1d});
     } else {
       this.material = app.config.material;
     }
@@ -49,7 +75,23 @@ export default class Grid {
     this.setupMetaballs();
     console.log("Grid init");
 
-    this.scene.add(this.metaballMesh);
+    if (this.metaballMesh === undefined) {
+      this.metaballMesh = new THREE.Mesh(this.geometry, this.material);
+      this.scene.add(this.metaballMesh);
+    } else {
+      this.metaballMesh.geometry = this.geometry;
+    }
+
+    // planes
+    this.planePoints = [];
+    for (var x = 0; x < this.res; x+= 4) {
+      for (var y = 0; y < this.res; y+= 4) {
+        this.planePoints.push(new THREE.Vector3(x, 0, y));
+      }
+    }
+    this.planeInfluence = 1.0;
+    this.planeInfluenceSquared = this.planeInfluence * this.planeInfluence;
+
   };
 
   // Convert from 1D index to 3D indices
@@ -107,11 +149,10 @@ export default class Grid {
       this.geometry.faces.push(new THREE.Face3(a, b, c, [na, nb, nc]));
     }
     this.geometry.dynamic = true;
-
-    this.metaballMesh = new THREE.Mesh(this.geometry, this.material);
   }
 
   setupCells() {
+    this.cells = [];
     for (var i = 0; i < this.res3; i++) {
       var i3 = this.i1toi3(i);
       var {x, y, z} = this.i3toPos(i3);
@@ -134,6 +175,9 @@ export default class Grid {
   }
 
   setupMetaballs() {
+
+    this.balls = [];
+
     var x, y, z, vx, vy, vz, radius, pos, vel;
     var matLambertWhite = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
     var maxRadiusTRippled = this.maxRadius * 3;
@@ -160,6 +204,23 @@ export default class Grid {
       // this.scene.add(ball.mesh);
       this.balls.push(ball);
     }
+  }
+
+  sample(point) {
+
+    var isovalue = 0;
+    for (var b = 0; b < this.balls.length; b++) {
+
+      // Accumulate f for each metaball relative to this cell
+      isovalue += (this.balls[b].radius2 / point.distanceToSquared(this.balls[b].pos));
+
+    }
+    // Accumulate f with planes
+    for (var p = 0; p < this.planePoints.length; p++) {
+        isovalue += (this.planeInfluenceSquared / point.distanceToSquared(this.planePoints[p])); 
+    }
+
+    return isovalue;
   }
 
   update() {
@@ -189,10 +250,10 @@ export default class Grid {
         }
 
         // Update label
-        if (this.showGrid === false) {
-          this.cells[c].center.clearLabel();
-          continue;
-        }
+        // if (this.showGrid === false) {
+        //   this.cells[c].center.clearLabel();
+        //   continue;
+        // }
 
         this.cells[c].center.updateLabel(this.camera);
       }    
@@ -207,24 +268,19 @@ export default class Grid {
       // Color cells that have a sample > 1 at the corners
       for (var c = 0; c < this.res3; c++) {
         for (var cp = 0; cp < 8; cp++) {
-          this.cells[c].corners[cp].isovalue = 0;
-          for (var b = 0; b < this.balls.length; b++) {
 
-            // Accumulate f for each metaball relative to this cell
-            this.cells[c].corners[cp].isovalue += (this.balls[b].radius2 / this.cells[c].corners[cp].pos.distanceToSquared(this.balls[b].pos));
-
-            if (this.cells[c].corners[cp].isovalue > this.isolevel) {
-              // this.cells[c].corners[cp].show();
-            }
+          this.cells[c].corners[cp].isovalue = this.sample(this.cells[c].corners[cp].pos);
+          if (this.cells[c].corners[cp].isovalue > this.isolevel) {
+          // this.cells[c].corners[cp].show();
           }
 
           // // Update label
-          // if (this.showGrid === false) {
-          //   this.cells[c].corners[cp].clearLabel();
-          //   continue;
-          // }
+        //   if (this.showGrid === false) {
+        //     this.cells[c].corners[cp].clearLabel();
+        //     continue;
+        //   }
 
-          // this.cells[c].corners[cp].updateLabel(this.camera);
+        //   this.cells[c].corners[cp].updateLabel(this.camera);
         }
 
         // Draw edges
@@ -233,10 +289,6 @@ export default class Grid {
         if (polygon !== null && polygon !== undefined) {
           this.positionsArray.push.apply(this.positionsArray, polygon.vertPositions);
           this.normalsArray.push.apply(this.normalsArray, polygon.vertNormals);
-          for (var i = 0; i < polygon.vertPositions.length; i++) {
-            // this.positionsArray[this.count + i] = polygon.vertPositions[i];
-            // this.positionsArray[this.count + i] = polygon.vertNormals[i];              
-          }
           this.count += polygon.vertPositions.length;       
         } 
       }
@@ -251,27 +303,22 @@ export default class Grid {
   }
 
   updateMesh() {
-    this.geometry = new THREE.Geometry();
-    for (var i = 0; i < this.positionsArray.length; i++) {
-      this.geometry.vertices.push(this.positionsArray[i]);
-    }
 
+    noiseMaterial.uniforms['time'].value = .00025 * (Date.now() - startTime);
+
+    this.geometry.vertices = this.positionsArray;
+    this.geometry.verticesNeedUpdate = true;
+
+    var faces = [];
     var nFaces = this.positionsArray.length / 3;
     for (var i = 0; i < nFaces; i++) {
       var a = i * 3;
       var b = a + 1;
       var c = a + 2;
-      this.geometry.faces.push(new THREE.Face3(a, b, c, [this.normalsArray[a], this.normalsArray[b], this.normalsArray[c]]));
+      faces.push(new THREE.Face3(a, b, c, [this.normalsArray[a], this.normalsArray[b], this.normalsArray[c]]));
     }
-    this.metaballMesh.geometry = this.geometry;
-
-    // this.geometry.verticesNeedUpdate = true;
-    // if (this.metaballMesh !== undefined) {
-    //   this.scene.remove(this.metaballMesh);
-    // }
-    // this.metaballMesh = new THREE.Mesh(this.geometry, this.material);
-    // this.scene.add(this.metaballMesh);
-
+    this.geometry.faces = faces;    
+    this.geometry.elementsNeedUpdate = true;
   }
 
   pause() {
@@ -382,7 +429,7 @@ class Cell {
   }
 
   init() {
-    this.makeMesh();
+    // this.makeMesh();
     this.makeInspectPoints();
   }
 
@@ -499,9 +546,13 @@ class Cell {
   polygonize(isolevel) {
 
     var vertexList = [];
+    var normalList = [];
+
     for (var v = 0; v < 12; v++) {
       vertexList.push(new THREE.Vector3(0, 0, 0));
+      normalList.push(new THREE.Vector3(0, 0, 0));
     }
+
     var LUTIndex = 0;
     var corner, edges, alpha;
 
@@ -520,39 +571,100 @@ class Cell {
     // Create vertices based on linear interpolation between voxel corners
     if (edges & 1) {
       vertexList[0] = this.vertexInterpolation(isolevel, this.corners[0], this.corners[1]);
+      normalList[0] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[0].isovalue - this.corners[4].isovalue,
+        this.corners[0].isovalue - this.corners[3].isovalue
+        );
+
     }
     if (edges & 2) {
       vertexList[1] = this.vertexInterpolation(isolevel, this.corners[1], this.corners[2]);
+      normalList[1] = new THREE.Vector3(
+        this.corners[1].isovalue - this.corners[0].isovalue,
+        this.corners[6].isovalue - this.corners[2].isovalue,
+        this.corners[2].isovalue - this.corners[1].isovalue
+        );
     }
     if (edges & 4) {
       vertexList[2] = this.vertexInterpolation(isolevel, this.corners[2], this.corners[3]);
+      normalList[2] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
     if (edges & 8) {
       vertexList[3] = this.vertexInterpolation(isolevel, this.corners[3], this.corners[0]);
+      normalList[3] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
     if (edges & 16) {
       vertexList[4] = this.vertexInterpolation(isolevel, this.corners[4], this.corners[5]);
+      normalList[4] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
     if (edges & 32) {
       vertexList[5] = this.vertexInterpolation(isolevel, this.corners[5], this.corners[6]);
+      normalList[5] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
     if (edges & 64) {
       vertexList[6] = this.vertexInterpolation(isolevel, this.corners[6], this.corners[7]);
+      normalList[6] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
     if (edges & 128) {
       vertexList[7] = this.vertexInterpolation(isolevel, this.corners[7], this.corners[4]);
+      normalList[7] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
     if (edges & 256) {
       vertexList[8] = this.vertexInterpolation(isolevel, this.corners[0], this.corners[4]);
+      normalList[8] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
     if (edges & 512) {
       vertexList[9] = this.vertexInterpolation(isolevel, this.corners[1], this.corners[5]);
+      normalList[9] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
     if (edges & 1024) {
       vertexList[10] = this.vertexInterpolation(isolevel, this.corners[2], this.corners[6]);
+      normalList[10] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
     if (edges & 2048) {
       vertexList[11] = this.vertexInterpolation(isolevel, this.corners[3], this.corners[7]);
+      normalList[11] = new THREE.Vector3(
+        this.corners[0].isovalue - this.corners[1].isovalue,
+        this.corners[4].isovalue - this.corners[0].isovalue,
+        this.corners[3].isovalue - this.corners[0].isovalue
+        );
     }
 
     // Create triangles
@@ -569,19 +681,29 @@ class Cell {
       o2 = o1 + 1;
       o3 = o1 + 2;
 
-      var v0 = vertexList[LUT.TRI_TABLE[LUTIndex + i]];
-      var v1 = vertexList[LUT.TRI_TABLE[LUTIndex + i + 1]];
-      var v2 = vertexList[LUT.TRI_TABLE[LUTIndex + i + 2]];
+      var v0 = vertexList[LUT.TRI_TABLE[o1]];
+      var v1 = vertexList[LUT.TRI_TABLE[o2]];
+      var v2 = vertexList[LUT.TRI_TABLE[o3]];
 
       vertPositions.push(v0);
       vertPositions.push(v1);
       vertPositions.push(v2);
 
-      var tri = new THREE.Triangle(v0, v1, v2);
-      var normal = tri.normal();
-      vertNormals.push(normal.clone());
-      vertNormals.push(normal.clone());
-      vertNormals.push(normal.clone());
+      var e0 = new THREE.Vector3(0, 0, 0);
+      e0.subVectors(v1, v0);
+      var e1 = new THREE.Vector3(0, 0, 0);
+      e1.subVectors(v2, v1);
+
+      var normal = new THREE.Vector3(0, 0, 0);
+      normal.crossVectors(e0, e1);
+
+      var n0 = normalList[LUT.TRI_TABLE[o1]];
+      var n1 = normalList[LUT.TRI_TABLE[o1]];
+      var n2 = normalList[LUT.TRI_TABLE[o1]];
+
+      vertNormals.push(normal);
+      vertNormals.push(normal);
+      vertNormals.push(normal);
 
       numTris++;
 
