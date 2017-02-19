@@ -3,32 +3,7 @@ const THREE = require('three');
 import Metaball from './metaball.js';
 import LUT from './marching_cube_LUT.js';
 
-var startTime = Date.now();
-
-var noiseMaterial = new THREE.ShaderMaterial({
-  uniforms: {
-    tExplosion: {
-      type: "t", 
-      value: THREE.ImageUtils.loadTexture('./explosion.png') //pyroclastic_gradients
-    },
-    time: { // float initialized to 0
-      type: "f", 
-      value: 0.0 
-    },
-    noiseStrength: { // float initialized to 0
-      type: "f", 
-      value: 10.0 
-    },
-    bStrength: { // float initialized to 0
-      type: "f", 
-      value: 2.0 
-    }
-  },
-  vertexShader: require('./glsl/metaball-vert.glsl'),
-  fragmentShader: require('./glsl/metaball-frag.glsl')
-})
-
-export default class Grid {
+export default class MarchingCubes {
 
   constructor(app) {      
     this.init(app);
@@ -303,8 +278,6 @@ export default class Grid {
   }
 
   updateMesh() {
-
-    noiseMaterial.uniforms['time'].value = .00025 * (Date.now() - startTime);
 
     this.geometry.vertices = this.positionsArray;
     this.geometry.verticesNeedUpdate = true;
