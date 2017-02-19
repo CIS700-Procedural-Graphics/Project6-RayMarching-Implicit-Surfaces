@@ -106,9 +106,6 @@ export default class MarchingCubes {
     var maxRadiusDoubled = this.maxRadius * 2;
 
     for (var i = 0; i < this.numMetaballs; i++) {
-      x = Math.random() * (this.gridWidth - maxRadiusTRippled) + maxRadiusDoubled;
-      y = Math.random() * (this.gridWidth - maxRadiusTRippled) + maxRadiusDoubled;
-      z = Math.random() * (this.gridWidth - maxRadiusTRippled) + maxRadiusDoubled;  
       x = this.gridWidth / 2;    
       y = this.gridWidth / 2;    
       z = this.gridWidth / 2;    
