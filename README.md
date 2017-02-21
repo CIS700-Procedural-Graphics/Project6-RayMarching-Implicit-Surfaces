@@ -69,3 +69,4 @@ http://graphics.cs.williams.edu/courses/cs371/f14/reading/implicit.pdf
 - `npm run build`
 - Add and commit all changes
 - `npm run deploy`
+- If you're having problems with assets not linking correctly, make sure you wrap you're filepaths in `require()`. This will make the bundler package and your static assets as well. So, instead of `loadTexture('./images/thing.bmp')`, do `loadTexture(require('./images/thing.bmp'))`.
