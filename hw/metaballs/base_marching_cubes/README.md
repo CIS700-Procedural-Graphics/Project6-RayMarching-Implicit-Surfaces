@@ -49,7 +49,7 @@ This file contains the edge table and the triangle table for the marching cubes.
 
 The `Metaball` class defines the position, velocity, and radius of a metaball. Implement its `update` function to start moving them around. Make sure to handle boundaries such that the balls will not reach close the grid's edges. This could interfere with polygonization later on. We suggest keeping a margin.
 
-### Sampling at corners (5 points)
+## Sampling at corners (5 points)
 At each frame update, compute the sample values for all corners of a voxel.
 
 ## Polygonization (50 points)
@@ -59,7 +59,7 @@ Implement `polygonize` inside `Cell` class. This function should return the list
 
 Using 8-bit, each corner that has an isovalue above the isolevel can be represented as a 1. 
 
-### Vertices (30 points)
+### Vertices (30 points out of 50)
 
 To compute the vertices, we have provided the look-up tables from Paul Bourke's.
 
@@ -67,7 +67,7 @@ To compute the vertices, we have provided the look-up tables from Paul Bourke's.
 
 - **TRI_TABLE**: This table acts as the triangle indices. Every 16 elements in the table represents a possible polygonizing configuration. Within each configuration, every three consecutive elements represents the indices of a triangle that should be created from the edges above. 
 
-### Normals (20 points)
+### Normals (20 points out of 50)
 
 Compute the normals using the gradient of the vertex with respect to the x, y, and z.
 
