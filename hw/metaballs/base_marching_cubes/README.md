@@ -16,9 +16,11 @@ We have provided a basecode as a reference. You are welcome to modify the framew
 
 _main.js_:
 
-	- `App`:
+  - `App`:
 
-	This is a global configuration object. All information for the marching cubes are stored here. **Note**: `App.visualDebug` is a global control of all the visual debugging components. Even though it is helpful for development, it could be memory intensive. Toggle this flag off for better perforamance at high resolution.
+This is a global configuration object. All information for the marching cubes are stored here. 
+
+**Note**: `App.visualDebug` is a global control of all the visual debugging components. Even though it is helpful for development, it could be memory intensive. Toggle this flag off for better perforamance at high resolution.
 
 _marching_cubes.js_:
 
