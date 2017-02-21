@@ -9,6 +9,7 @@
     "publish_project3": "git push git@github.com:CIS700-Procedural-Graphics/Project3-LSystems.git `git subtree split --prefix hw/lsystems/base master`:master --force",
     "publish_project4": "git push git@github.com:CIS700-Procedural-Graphics/Project4-Shape-Grammar.git `git subtree split --prefix hw/shapegrammars/base master`:master --force",
     "publish_project5": "git push git@github.com:CIS700-Procedural-Graphics/Project5-Shaders.git `git subtree split --prefix hw/shaders/base master`:master --force",
+    "publish_project6_1": "git push git@github.com:CIS700-Procedural-Graphics/Project6-RayMarching-Implicit-Surfaces.git `git subtree split --prefix hw/raymarching/base master`:master --force",
     "publish_ic_distribution": "git push git@github.com:CIS700-Procedural-Graphics/IC-Distribution.git `git subtree split --prefix in_class/christmas_tree/base master`:master --force"
   },
   "publish_targets": {

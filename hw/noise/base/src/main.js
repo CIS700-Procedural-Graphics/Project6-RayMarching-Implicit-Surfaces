@@ -43,8 +43,10 @@ function onLoad(framework) {
 
 // called on frame updates
 function onUpdate(framework) {
-  console.log(`the time is ${new Date()}`);
+  // console.log(`the time is ${new Date()}`);
 }
 
 // when the scene is done initializing, it will call onLoad, then on frame updates, call onUpdate
 Framework.init(onLoad, onUpdate);
+
+console.log('hello world')
