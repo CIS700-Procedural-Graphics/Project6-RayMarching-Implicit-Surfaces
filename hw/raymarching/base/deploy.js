@@ -7,11 +7,15 @@ git.status(function(err, status) {
   if (!status.isClean()) {
       console.error('Error: You have uncommitted changes! Please commit them first'.red);   
   } else {
-    git.raw(['subtree', 'split', '--prefix', 'build', '-b', 'build'], function(err, result) {
+    git.raw(['subtree', 'split', '--prefix', 'build', '-b', 'gh-pages'], function(err, result) {
       if (err) console.warn(err.toString().yellow);
 
-      git.raw(['push', 'origin', 'build:gh-pages', '-f'], function(err, result) {
-        if (err) console.error(err.toString().red);
+      git.push(['origin', 'gh-pages', '-f'], function(err, result) {
+        if (err) {
+          console.error(err.toString().red);
+        } else {
+          console.log('Deployed!'.green);
+        }
       });
     })
   }
