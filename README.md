@@ -46,14 +46,14 @@ Implement a simple Lambert material. Additional materials can earn extra points.
   - intersection, subtraction, union, transformation (20pts)
 ##### Animate the scene (5pts)
 
-## Extra credits
-- Implement SDF for [Mandelbulb](https://www.shadertoy.com/view/XsXXWS)
+## Extra credits (Up to 30 pts)
+- Implement SDF for [Mandelbulb](https://www.shadertoy.com/view/XsXXWS) (10pts)
   - You need to implement naive raymarching (not sphere tracing) to get this to work 
-- Lighting effects
-  - Soft shadowing using secondary rays 
-  - Ambient occlusion
-- Additional materials besides Lambert.
-- Additional SDFs besides the listed primitive.
+- Lighting effects 
+  - Soft shadowing using secondary rays (5pts)
+  - Ambient occlusion (10pts)
+- Additional materials besides Lambert. (5pts each)
+- Additional SDFs besides the listed primitive. (5pts each)
 
 ## Resources
 http://graphics.cs.williams.edu/courses/cs371/f14/reading/implicit.pdf
