@@ -64,3 +64,8 @@ http://graphics.cs.williams.edu/courses/cs371/f14/reading/implicit.pdf
 - Publish your project to gh-pages. `npm run deploy`. It should now be visible at http://username.github.io/repo-name
 - Create a [pull request](https://help.github.com/articles/creating-a-pull-request/) to this repository, and in the comment, include a link to your published project.
 - Submit the link to your pull request on Canvas.
+
+## Deploy
+- `npm run build`
+- Add and commit all changes
+- `npm run deploy`
