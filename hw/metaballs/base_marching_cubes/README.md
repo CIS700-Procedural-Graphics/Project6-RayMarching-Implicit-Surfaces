@@ -14,9 +14,11 @@ We suggest the following resources before starting your assignment:
 
 We have provided a basecode as a reference. You are welcome to modify the framework for your project.
 
-- _main.js_
-  * `App`
-This is a global configuration object. All information for the marching cubes are stored here. **Note**: `App.visualDebug` is a global control of all the visual debugging components. Even though it is helpful for development, it could be memory intensive. Toggle this flag off for better perforamance at high resolution.
+_main.js_:
+
+	- `App`:
+
+	This is a global configuration object. All information for the marching cubes are stored here. **Note**: `App.visualDebug` is a global control of all the visual debugging components. Even though it is helpful for development, it could be memory intensive. Toggle this flag off for better perforamance at high resolution.
 
 _marching_cubes.js_:
 
@@ -27,14 +29,17 @@ _marching_cubes.js_:
     This class contains information about a single voxel, and its sample points. Polygonization happens here.
 
 _inspect_point.js_:
+
   - `class InspectPoint`:
     This class simply contains a single sample point that can output its value on the screen at its pixel location.
 
-_metaball.js_
+_metaball.js_:
+
   - `class Metaball`:
     This class represents a single metaball.
 
 _marching_cube_LUT.js_:
+
 This file contains the edge table and the triangle table for the marching cubes.
 
 
