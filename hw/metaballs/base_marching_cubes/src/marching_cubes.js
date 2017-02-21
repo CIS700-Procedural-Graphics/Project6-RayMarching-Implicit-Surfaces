@@ -310,14 +310,14 @@ class Voxel {
 
   vertexInterpolation(isolevel, posA, posB) {
 
-    // TODO
+    // @TODO
     var lerpPos;
     return lerpPos;
   }
 
   polygonize(isolevel) {
 
-    // TODO
+    // @TODO
     var vertexList = [];
     var normalList = [];
 

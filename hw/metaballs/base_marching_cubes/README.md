@@ -53,39 +53,41 @@ _marching_cube_LUT.js_:
 
 This file contains the edge table and the triangle table for the marching cubes.
 
-## Moving metaballs (5 points)
-The `Metaball` class defines the position, velocity, and radius of a metaball. Implement its `update` function to start moving them around. Make sure to handle boundaries such that the balls will not reach close the grid's edges. This could interfere with polygonization later on. We suggest keeping a margin.
+## Animate metaballs (5 points)
+Implement the `update` for metaballs to move its position based velocity. Reverse the velocity whenever the metaball goes out of bounds. Since the metaball function is not well defined at the boundaries, maintain an additional small margin so that the metaball can reverse its moving direction before reaching the bounds.
+
+## Metaball function (2 points)
+Implement the metaball function inside `sample` of `MarchingCubes`. This function should return the total influences of all moving metaballs with respect to a given point.
 
 ## Sampling at corners (15 points)
-At each frame update, compute the sample values for all corners of a voxel.
+In order to polygonize a voxel, generate new samples at each corner of the voxel. Their isovalues must be updated as the metaball function changes due of metaballs moving.
 
 ## Polygonization (50 points)
-Implement `polygonize` inside `Cell` class. This function should return the list of vertices and normals of the triangles generated from the voxel. The table assumes the following voxel's indexing scheme:
+Implement `polygonize` inside `Cell` class. This function should return the list of **vertices** and **normals** of the triangles polygonized in the voxel. 
 
+### Vertices (30 points out of 50)
+To compute the vertices, we have provided the look-up tables from Paul Bourke's. The table assumes the following indexing scheme:
 ![](./ref_voxel_indexing.png)
 
 - _The eight corners can be represented as an 8-bit number, where 1 means the isovalue is above or below the isolevel based on your implementation._
 - _The twelve edges can be represented as a 12-bit number, where 1 means that the isosurface intersects with this edge._
 
-### Vertices (30 points out of 50)
-To compute the vertices, we have provided the look-up tables from Paul Bourke's.
-
-- **EDGE_TABLE**: This table returns a 12-bit index that represents the edges intersected by the isosurface. An edge is intersected if its bit is 1. For each intersected edge, compute the linearly interpolated vertex position on the edge according to the isovalue at each end corner of the edge.
+- **EDGE_TABLE**: This table returns a 12-bit number that represents the edges intersected by the isosurface. For each intersected edge, compute the linearly interpolated vertex position on the edge according to the isovalue at each end corner of the edge.
 
 - **TRI_TABLE**: This table acts as the triangle indices. Every 16 elements in the table represents a possible polygonizing configuration. Within each configuration, every three consecutive elements represents the indices of a triangle that should be created from the edges above. 
 
 ### Normals (20 points out of 50)
-Compute the normals using the gradient of the vertex with respect to the x, y, and z.
+Compute the normals using the gradient of the vertex with respect to the x, y, and z. The normals are then used for shading different materials.
 
-## Meshing (20 points)
-The mesh for the isosurface should be created once. At each frame, using the list of **vertices** and **normals** polygonized from the voxels, update the mesh's geometry for the isosurface. Notice that the total volume of the mesh does change.
+## Meshing (18 points)
+The mesh for the metaball's isosurface should be created once. At each frame, using the list of **vertices** and **normals** polygonized from the voxels, update the mesh's geometry for the isosurface. Notice that the total volume of the mesh does change.
 
 ## Materials and post-processing (10 points)
 Interesting shader materials beyond just the provided threejs materials. We encourage using your previous shaders assignment for this part.
 
-## Extra credits
-- Metaball can be positive or negative. A negative metaball will substract from the surface (which pushed the surface inward). Implement a scene with both positive and negative metaballs.
-- More implicit surfaces! Implement other none-spherical surfaces (for example: planes, mesh, etc.). Some very interesting ideas are to blend your metaballs into those surfaces.
+## Extra credits (Up to 30 points)
+- Metaball can be positive or negative. A negative metaball will substract from the surface, which pushed the surface inward. **Implement a scene with both positive and negative metaballs. (10 points)**
+- **More implicit surfaces!** For example: planes, mesh, etc.). Some very interesting ideas are to blend your metaballs into those surfaces. **(5 points for each)**
 
 ## Submission
 
@@ -93,4 +95,6 @@ Interesting shader materials beyond just the provided threejs materials. We enco
 - Publish your project to gh-pages. `npm run deploy`. It should now be visible at http://username.github.io/repo-name
 - Create a [pull request](https://help.github.com/articles/creating-a-pull-request/) to this repository, and in the comment, include a link to your published project.
 - Submit the link to your pull request on Canvas.
+
+
 
