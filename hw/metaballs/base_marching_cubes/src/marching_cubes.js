@@ -144,7 +144,7 @@ export default class MarchingCubes {
   // Implement a function that returns the value of the all metaballs influence to a given point.
   // Please follow the resources given in the write-up for details.
   sample(point) {
-    // TODO
+    // @TODO
     var isovalue = 1.1;
     return isovalue;
   }
@@ -206,12 +206,11 @@ export default class MarchingCubes {
   };
 
   makeMesh() {
-    // TODO
+    // @TODO
   }
 
   updateMesh() {
-    // TODO
-
+    // @TODO
   }  
 };
 

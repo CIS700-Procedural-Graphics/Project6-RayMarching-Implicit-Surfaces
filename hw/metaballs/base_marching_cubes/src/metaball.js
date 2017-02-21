@@ -41,6 +41,6 @@ export default class Metaball {
   };
 
   update() {
-    // TODO
+    // @TODO
   }
 }

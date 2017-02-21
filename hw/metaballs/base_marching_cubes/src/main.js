@@ -37,6 +37,7 @@ var App = {
     gridWidth:      DEFAULT_GRID_WIDTH,
 
     // Width of each voxel
+     // Ideally, we want the voxel to be small (higher resolution)
     gridCellWidth:  DEFAULT_GRID_WIDTH / DEFAULT_GRID_RES,
 
     // Number of metaballs
