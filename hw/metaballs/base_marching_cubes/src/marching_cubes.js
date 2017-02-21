@@ -1,53 +1,63 @@
 const THREE = require('three');
 
 import Metaball from './metaball.js';
+import InspectPoint from './inspect_point.js'
 import LUT from './marching_cube_LUT.js';
+var VISUAL_DEBUG = true;
+
+const LAMBERT_WHITE = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+const LAMBERT_GREEN = new THREE.MeshBasicMaterial( { color: 0x00ee00, transparent: true, opacity: 0.5 });
+const WIREFRAME_MAT = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 10 } );
+
 
 export default class MarchingCubes {
 
-  constructor(app) {      
-    this.init(app);
+  constructor(App) {      
+    this.init(App);
   }
 
-  init(app) {
+  init(App) {
     this.isPaused = false;    
+    VISUAL_DEBUG = App.config.visualDebug;
+
+    // Initializing member variables.
+    // Additional variables are used for fast computation.
     this.origin = new THREE.Vector3(0);
 
-    this.isolevel = app.config.isolevel;
-    this.minRadius = app.config.minRadius;
-    this.maxRadius = app.config.maxRadius;
+    this.isolevel = App.config.isolevel;
+    this.minRadius = App.config.minRadius;
+    this.maxRadius = App.config.maxRadius;
 
-    this.gridCellWidth = app.config.gridCellWidth;
-    this.halfCellWidth = app.config.gridCellWidth / 2.0;
-    this.gridWidth = app.config.gridWidth;
+    this.gridCellWidth = App.config.gridCellWidth;
+    this.halfCellWidth = App.config.gridCellWidth / 2.0;
+    this.gridWidth = App.config.gridWidth;
 
-    this.res = app.config.gridRes;
-    this.res2 = app.config.gridRes * app.config.gridRes;
-    this.res3 = app.config.gridRes * app.config.gridRes * app.config.gridRes;
+    this.res = App.config.gridRes;
+    this.res2 = App.config.gridRes * App.config.gridRes;
+    this.res3 = App.config.gridRes * App.config.gridRes * App.config.gridRes;
 
-    this.maxSpeed = app.config.maxSpeed;
-    this.numMetaballs = app.config.numMetaballs;
+    this.maxSpeed = App.config.maxSpeed;
+    this.numMetaballs = App.config.numMetaballs;
 
-    this.camera = app.camera;
-    this.scene = app.scene;
+    this.camera = App.camera;
+    this.scene = App.scene;
 
-    this.cells = [];
+    this.voxels = [];
     this.labels = [];
     this.balls = [];
 
     this.showSpheres = true;
     this.showGrid = true;
 
-    if (app.config.material) {
+    if (App.config.material) {
       this.material = new THREE.MeshPhongMaterial({ color: 0xff6a1d});
     } else {
-      this.material = app.config.material;
+      this.material = App.config.material;
     }
 
     this.setupCells();
     this.setupMetaballs();
     this.makeMesh();
-    console.log("Grid init");
   };
 
   // Convert from 1D index to 3D indices
@@ -82,17 +92,19 @@ export default class MarchingCubes {
   };
 
   setupCells() {
-    this.cells = [];
+
+    // Allocate voxels based on our grid resolution
+    this.voxels = [];
     for (var i = 0; i < this.res3; i++) {
       var i3 = this.i1toi3(i);
       var {x, y, z} = this.i3toPos(i3);
-      var cell = new Cell(new THREE.Vector3(x, y, z), this.gridCellWidth);
+      var voxel = new Voxel(new THREE.Vector3(x, y, z), this.gridCellWidth);
+      this.voxels.push(voxel);
 
-      this.scene.add(cell.wireframe);
-      this.scene.add(cell.mesh);
-      this.scene.add(cell.center.mesh);
-      
-      this.cells.push(cell);
+      if (VISUAL_DEBUG) {
+        this.scene.add(voxel.wireframe);
+        this.scene.add(voxel.mesh);
+      }
     }    
   }
 
@@ -101,10 +113,11 @@ export default class MarchingCubes {
     this.balls = [];
 
     var x, y, z, vx, vy, vz, radius, pos, vel;
-    var matLambertWhite = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+    var matLambertWhite = LAMBERT_WHITE;
     var maxRadiusTRippled = this.maxRadius * 3;
     var maxRadiusDoubled = this.maxRadius * 2;
 
+    // Randomly generate metaballs with different sizes and velocities
     for (var i = 0; i < this.numMetaballs; i++) {
       x = this.gridWidth / 2;    
       y = this.gridWidth / 2;    
@@ -118,21 +131,21 @@ export default class MarchingCubes {
       
       radius = Math.random() * (this.maxRadius - this.minRadius) + this.minRadius;
   
-      var ball = new Metaball(pos, radius, vel, this.gridWidth);
-      
-      this.scene.add(ball.mesh);
+      var ball = new Metaball(pos, radius, vel, this.gridWidth, VISUAL_DEBUG);
       this.balls.push(ball);
+      
+      if (VISUAL_DEBUG) {
+        this.scene.add(ball.mesh);
+      }
     }
   }
 
+  // This function samples a point from the metaball's density function
+  // Implement a function that returns the value of the all metaballs influence to a given point.
+  // Please follow the resources given in the write-up for details.
   sample(point) {
-
-    var isovalue = 0;
-      // Accumulate f for each metaball relative to this cell
-    for (var b = 0; b < this.balls.length; b++) {
-      isovalue += (this.balls[b].radius2 / point.distanceToSquared(this.balls[b].pos));
-
-    }
+    // TODO
+    var isovalue = 1.1;
     return isovalue;
   }
 
@@ -142,28 +155,28 @@ export default class MarchingCubes {
       return;
     }
 
+    // This should move the metaballs
     this.balls.forEach(function(ball) {
       ball.update();
     });
 
     for (var c = 0; c < this.res3; c++) {
-      this.cells[c].hide();
-    }
 
-    // === SAMPLING FROM CENTERS
-    for (var c = 0; c < this.res3; c++) {
-      this.cells[c].center.isovalue = this.sample(this.cells[c].center.pos);
+      // Sampling the center point
+      this.voxels[c].center.isovalue = this.sample(this.voxels[c].center.pos);
 
-      // Color cells that have a sample > 1 at the center
-      if (this.cells[c].center.isovalue > this.isolevel) {
-        this.cells[c].mesh.visible = true;
-      }
-
-      // Update label
-      if (this.showGrid) {
-        this.cells[c].center.updateLabel(this.camera);
+      // Visualizing grid
+      if (VISUAL_DEBUG && this.showGrid) {
+        
+        // Toggle voxels on or off
+        if (this.voxels[c].center.isovalue > this.isolevel) {
+          this.voxels[c].show();
+        } else {
+          this.voxels[c].hide();
+        }
+        this.voxels[c].center.updateLabel(this.camera);
       } else {
-        this.cells[c].center.clearLabel();
+        this.voxels[c].center.clearLabel();
       }
     }
 
@@ -180,14 +193,14 @@ export default class MarchingCubes {
 
   show() {
     for (var i = 0; i < this.res3; i++) {
-      this.cells[i].wireframe.visible = true;
+      this.voxels[i].show();
     }
     this.showGrid = true;
   };
 
   hide() {
     for (var i = 0; i < this.res3; i++) {
-      this.cells[i].wireframe.visible = false;
+      this.voxels[i].hide();
     }
     this.showGrid = false;
   };
@@ -202,83 +215,9 @@ export default class MarchingCubes {
   }  
 };
 
-// === Inspect points
-class Inspectpoint {
+// ------------------------------------------- //
 
-  constructor(pos, isovalue, color, visible) {
-    this.pos = pos;
-    this.isovalue = isovalue;
-    this.color = color;
-    this.visible = visible;
-    this.mesh = null;
-    this.label = null;
-
-    this.init();
-  }
-
-  init() {
-    this.makeMesh();
-    this.makeLabel();
-  };
-
-  makeMesh() {
-    var geo, mat;
-    geo = new THREE.Geometry();
-    geo.vertices.push(this.pos);
-    mat = new THREE.PointsMaterial( { color: this.color, size: 5, sizeAttenuation: false } );
-    this.mesh = new THREE.Points( geo, mat );
-    this.mesh.visible = this.visible;    
-  }
-
-  makeLabel() {
-    this.label = document.createElement('div');
-    this.label.style.position = 'absolute';
-    this.label.style.width = 100;
-    this.label.style.height = 100;
-    this.label.style.userSelect = 'none';
-    this.label.style.cursor = 'default';
-    this.label.style.fontSize = '0.3em';
-    this.label.style.pointerEvents = 'none';
-    document.body.appendChild(this.label);    
-  }
-
-  show() {
-    this.mesh.visible = true;
-  }
-
-  hide() {
-    this.mesh.visible = false;
-    this.clearLabel();
-  }
-
-  updatePosition(newPos) {
-    if (this.mesh) {
-      this.mesh.position.set(newPos.x, newPos.y, newPos.z);
-      this.show();
-    }
-  }
-
-  updateLabel(camera) {
-
-    var screenPos = this.pos.clone().project(camera);
-    screenPos.x = ( screenPos.x + 1 ) / 2 * window.innerWidth;;
-    screenPos.y = - ( screenPos.y - 1 ) / 2 *  window.innerHeight;;
-
-    this.label.style.top = screenPos.y + 'px';
-    this.label.style.left = screenPos.x + 'px';
-    this.label.innerHTML = this.isovalue.toFixed(2);
-    this.label.style.opacity = this.isovalue - 0.5;
-  }
-
-  clearLabel() {
-    this.label.innerHTML = '';
-    this.label.style.opacity = 0;
-  }
-
-}
-
-// === LOOK
-class Cell {
+class Voxel {
 
   constructor(position, gridCellWidth) {
     this.init(position, gridCellWidth);
@@ -288,11 +227,11 @@ class Cell {
     this.pos = position;
     this.gridCellWidth = gridCellWidth;
 
-    this.wireframeMat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 10 } );
-    this.lambertGreenMat = new THREE.MeshBasicMaterial( { color: 0x00ee00, transparent: true, opacity: 0.5 });
+    if (VISUAL_DEBUG) {
+      this.makeMesh();
+    }
     
-    this.makeMesh();
-    this.makeInspectPoints();
+    this.makeInspectPoints();      
   }
 
   makeMesh() {
@@ -327,12 +266,12 @@ class Cell {
     geo.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
 
     // Wireframe line segments
-    this.wireframe = new THREE.LineSegments( geo, this.wireframeMat );
+    this.wireframe = new THREE.LineSegments( geo, WIREFRAME_MAT );
     this.wireframe.position.set(this.pos.x, this.pos.y, this.pos.z);
 
     // Green cube
     geo = new THREE.BoxBufferGeometry(this.gridCellWidth, this.gridCellWidth, this.gridCellWidth);
-    this.mesh = new THREE.Mesh( geo, this.lambertGreenMat );
+    this.mesh = new THREE.Mesh( geo, LAMBERT_GREEN );
     this.mesh.position.set(this.pos.x, this.pos.y, this.pos.z);
   }
 
@@ -344,17 +283,30 @@ class Cell {
     var red = 0xff0000;
 
     // Center dot
-    this.center = new Inspectpoint(new THREE.Vector3(x, y, z), 0, red, true); 
+    this.center = new InspectPoint(new THREE.Vector3(x, y, z), 0, VISUAL_DEBUG); 
   }
 
   show() {
-    this.mesh.visible = true;
-    this.center.center.show();
+    if (this.mesh) {
+      this.mesh.visible = true;
+    }
+    if (this.wireframe) {
+      this.wireframe.visible = true;
+    }
   }
 
   hide() {
-    this.mesh.visible = false;
-    this.center.hide();
+    if (this.mesh) {
+      this.mesh.visible = false;
+    }
+
+    if (this.wireframe) {
+      this.wireframe.visible = false;
+    }
+
+    if (this.center) {
+      this.center.clearLabel();
+    }
   }
 
   vertexInterpolation(isolevel, posA, posB) {

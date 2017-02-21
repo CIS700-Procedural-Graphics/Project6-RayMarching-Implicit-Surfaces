@@ -4,10 +4,12 @@
 // http://paulbourke.net/geometry/polygonise/
 
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
+
 import Framework from './framework'
 import LUT from './marching_cube_LUT.js'
 import MarchingCubes from './marching_cubes.js'
 
+const DEFAULT_VISUAL_DEBUG = true;
 const DEFAULT_ISO_LEVEL = 1.0;
 const DEFAULT_GRID_RES = 4;
 const DEFAULT_GRID_WIDTH = 10;
@@ -17,20 +19,45 @@ const DEFAULT_MAX_RADIUS = 1;
 const DEFAULT_MAX_SPEED = 0.01;
 
 var App = {
-  grid:             undefined,
+  // 
+  marchingCubes:             undefined,
   config: {
+    // Global control of all visual debugging. 
+    // This can be set to false to disallow any memory allocation of visual debugging components. 
+    // **Note**: If your application experiences performance drop, disable this flag.
+    visualDebug:    DEFAULT_VISUAL_DEBUG,
+
+    // The isolevel for marching cubes
     isolevel:       DEFAULT_ISO_LEVEL,
+
+    // Grid resolution in each dimension. If gridRes = 4, then we have a 4x4x4 grid
     gridRes:        DEFAULT_GRID_RES,
+
+    // Total width of grid
     gridWidth:      DEFAULT_GRID_WIDTH,
+
+    // Width of each voxel
     gridCellWidth:  DEFAULT_GRID_WIDTH / DEFAULT_GRID_RES,
+
+    // Number of metaballs
     numMetaballs:   DEFAULT_NUM_METABALLS,
+
+    // Minimum radius of a metaball
     minRadius:      DEFAULT_MIN_RADIUS,
+
+    // Maxium radius of a metaball
     maxRadius:      DEFAULT_MAX_RADIUS,
+
+    // Maximum speed of a metaball
     maxSpeed:       DEFAULT_MAX_SPEED
   },
+
+  // Scene's framework objects
   camera:           undefined,
   scene:            undefined,
   renderer:         undefined,
+
+  // Play/pause control for the simulation
   isPaused:         false
 };
 
@@ -54,8 +81,8 @@ function onLoad(framework) {
 // called on frame updates
 function onUpdate(framework) {
 
-  if (App.grid) {
-    App.grid.update();
+  if (App.marchingCubes) {
+    App.marchingCubes.update();
   }
 }
 
@@ -77,49 +104,50 @@ function setupLights(scene) {
 }
 
 function setupScene(scene) {
-  App.grid = new MarchingCubes(App);
+  App.marchingCubes = new MarchingCubes(App);
 }
 
 
 function setupGUI(gui) {
 
   // more information here: https://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage
+  
   // --- CONFIG ---
   gui.add(App, 'isPaused').onChange(function(value) {
     App.isPaused = value;
     if (value) {
-      App.grid.pause();
+      App.marchingCubes.pause();
     } else {
-      App.grid.play();
+      App.marchingCubes.play();
     }
   });
 
   gui.add(App.config, 'numMetaballs', 1, 10).onChange(function(value) {
     App.config.numMetaballs = value;
-    App.grid.init(App);
+    App.marchingCubes.init(App);
   });
 
   // --- DEBUG ---
 
-  var debugFolder = gui.addFolder('Grid');
-  debugFolder.add(App.grid, 'showGrid').onChange(function(value) {
-    App.grid.showGrid = value;
+  var debugFolder = gui.addFolder('Debug');
+  debugFolder.add(App.marchingCubes, 'showGrid').onChange(function(value) {
+    App.marchingCubes.showGrid = value;
     if (value) {
-      App.grid.show();
+      App.marchingCubes.show();
     } else {
-      App.grid.hide();
+      App.marchingCubes.hide();
     }
   });
 
-  debugFolder.add(App.grid, 'showSpheres').onChange(function(value) {
-    App.grid.showSpheres = value;
+  debugFolder.add(App.marchingCubes, 'showSpheres').onChange(function(value) {
+    App.marchingCubes.showSpheres = value;
     if (value) {
       for (var i = 0; i < App.config.numMetaballs; i++) {
-        App.grid.balls[i].show();
+        App.marchingCubes.balls[i].show();
       }
     } else {
       for (var i = 0; i < App.config.numMetaballs; i++) {
-        App.grid.balls[i].hide();
+        App.marchingCubes.balls[i].hide();
       }
     }
   });
